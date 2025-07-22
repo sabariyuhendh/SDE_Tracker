@@ -52,7 +52,7 @@ export default function AdminPanel() {
 
   // Mutations
   const createStudentMutation = useMutation({
-    mutationFn: (data: typeof newStudent) => apiRequest("/api/students", "POST", data),
+    mutationFn: (data: typeof newStudent) => apiRequest("/api/students", { method: "POST", body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
       setNewStudent({ username: "", name: "", avatar: "" });
@@ -64,7 +64,7 @@ export default function AdminPanel() {
   });
 
   const bulkCreateMutation = useMutation({
-    mutationFn: (students: any[]) => apiRequest("/api/admin/students/bulk", "POST", { students }),
+    mutationFn: (students: any[]) => apiRequest("/api/admin/students/bulk", { method: "POST", body: JSON.stringify({ students }) }),
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
       setBulkStudents("");
@@ -78,7 +78,7 @@ export default function AdminPanel() {
 
   const markSolvedMutation = useMutation({
     mutationFn: ({ studentId, topic, count }: { studentId: number; topic: string; count: number }) =>
-      apiRequest(`/api/admin/students/${studentId}/mark-solved`, "POST", { topic, count }),
+      apiRequest(`/api/admin/students/${studentId}/mark-solved`, { method: "POST", body: JSON.stringify({ topic, count }) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
       setSelectedStudent(null);
@@ -92,7 +92,7 @@ export default function AdminPanel() {
   });
 
   const resetProgressMutation = useMutation({
-    mutationFn: (studentId: number) => apiRequest(`/api/admin/students/${studentId}/reset`, "POST"),
+    mutationFn: (studentId: number) => apiRequest(`/api/admin/students/${studentId}/reset`, { method: "POST" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
       toast({ title: "Student progress reset successfully!" });

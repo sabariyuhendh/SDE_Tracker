@@ -1,6 +1,7 @@
 
 import { students, weeklyReflections, users, type Student, type InsertStudent, type UpdateStudentProgress, type WeeklyReflection, type InsertWeeklyReflection, type User, type InsertUser } from "@shared/schema";
-import { pool } from './db';
+import { db } from './db';
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -131,35 +132,35 @@ export class MemStorage implements IStorage {
   }
 
   async updateStudentProgress(id: number, updates: UpdateStudentProgress): Promise<Student | undefined> {
-    const student = this.students.get(id);
-    if (!student) return undefined;
+    try {
+      const currentStudent = await this.getStudent(id);
+      if (!currentStudent) return undefined;
 
-    const currentWeek = this.getCurrentWeek();
-    let newTotalSolved = student.totalSolved;
-    let newWeeklyProgress = { ...student.weeklyProgress };
+      // Calculate new total solved from topic progress
+      let newTotalSolved = currentStudent.totalSolved;
+      if (updates.topicProgress) {
+        newTotalSolved = Object.values(updates.topicProgress).reduce(
+          (sum, topic) => sum + topic.solved, 0
+        );
+      }
 
-    // Calculate new total if topic progress updated
-    if (updates.topicProgress) {
-      newTotalSolved = Object.values(updates.topicProgress).reduce(
-        (sum, topic) => sum + topic.solved, 0
-      );
+      const [updated] = await db
+        .update(students)
+        .set({
+          totalSolved: newTotalSolved,
+          topicProgress: updates.topicProgress || currentStudent.topicProgress,
+          difficultyStats: updates.difficultyStats || currentStudent.difficultyStats,
+          weeklyProgress: updates.weeklyProgress || currentStudent.weeklyProgress,
+          lastUpdated: new Date(),
+        })
+        .where(eq(students.id, id))
+        .returning();
+
+      return updated;
+    } catch (error) {
+      console.error('Error updating student progress:', error);
+      return undefined;
     }
-
-    // Update weekly progress if there's an increase
-    if (updates.weeklyIncrease && updates.weeklyIncrease > 0) {
-      newWeeklyProgress[currentWeek] = (newWeeklyProgress[currentWeek] || 0) + updates.weeklyIncrease;
-    }
-
-    const updatedStudent: Student = {
-      ...student,
-      ...updates,
-      totalSolved: newTotalSolved,
-      weeklyProgress: newWeeklyProgress,
-      lastUpdated: new Date(),
-    };
-
-    this.students.set(id, updatedStudent);
-    return updatedStudent;
   }
 
   async deleteStudent(id: number): Promise<boolean> {
@@ -222,123 +223,104 @@ export class MemStorage implements IStorage {
 export class DatabaseStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    const result = await pool.query('SELECT * FROM admin_users WHERE id = $1', [id]);
-    return result.rows[0] || undefined;
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user || undefined;
+    } catch (error) {
+      console.error('Error getting user:', error);
+      return undefined;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await pool.query('SELECT * FROM admin_users WHERE username = $1', [username]);
-    return result.rows[0] || undefined;
+    try {
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      return user || undefined;
+    } catch (error) {
+      console.error('Error getting user by username:', error);
+      return undefined;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await pool.query(
-      'INSERT INTO admin_users (username, password) VALUES ($1, $2) RETURNING *',
-      [insertUser.username, insertUser.password]
-    );
-    return result.rows[0];
+    try {
+      const [user] = await db.insert(users).values(insertUser).returning();
+      return user;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
   }
 
   // Student methods
   async getStudent(id: number): Promise<Student | undefined> {
-    const result = await pool.query('SELECT * FROM students WHERE id = $1', [id]);
-    if (result.rows.length === 0) return undefined;
-    
-    const student = result.rows[0];
-    return {
-      id: student.id,
-      username: student.username,
-      name: student.name,
-      avatar: student.avatar,
-      totalSolved: student.total_solved,
-      weeklyProgress: student.weekly_progress || {},
-      topicProgress: student.topic_progress || {},
-      difficultyStats: student.difficulty_stats || { easy: 0, medium: 0, hard: 0 },
-      reflection: student.reflection,
-      lastUpdated: student.last_updated,
-      createdAt: student.created_at,
-    };
+    try {
+      const [student] = await db.select().from(students).where(eq(students.id, id));
+      return student || undefined;
+    } catch (error) {
+      console.error('Error getting student:', error);
+      return undefined;
+    }
   }
 
   async getStudentByUsername(username: string): Promise<Student | undefined> {
-    const result = await pool.query('SELECT * FROM students WHERE username = $1', [username]);
-    if (result.rows.length === 0) return undefined;
-    
-    const student = result.rows[0];
-    return {
-      id: student.id,
-      username: student.username,
-      name: student.name,
-      avatar: student.avatar,
-      totalSolved: student.total_solved,
-      weeklyProgress: student.weekly_progress || {},
-      topicProgress: student.topic_progress || {},
-      difficultyStats: student.difficulty_stats || { easy: 0, medium: 0, hard: 0 },
-      reflection: student.reflection,
-      lastUpdated: student.last_updated,
-      createdAt: student.created_at,
-    };
+    try {
+      const [student] = await db.select().from(students).where(eq(students.username, username));
+      return student || undefined;
+    } catch (error) {
+      console.error('Error getting student by username:', error);
+      return undefined;
+    }
   }
 
   async getAllStudents(): Promise<Student[]> {
-    const result = await pool.query('SELECT * FROM students ORDER BY total_solved DESC');
-    return result.rows.map(student => ({
-      id: student.id,
-      username: student.username,
-      name: student.name,
-      avatar: student.avatar,
-      totalSolved: student.total_solved,
-      weeklyProgress: student.weekly_progress || {},
-      topicProgress: student.topic_progress || {},
-      difficultyStats: student.difficulty_stats || { easy: 0, medium: 0, hard: 0 },
-      reflection: student.reflection,
-      lastUpdated: student.last_updated,
-      createdAt: student.created_at,
-    }));
+    try {
+      const allStudents = await db.select().from(students).orderBy(students.totalSolved);
+      return allStudents;
+    } catch (error) {
+      console.error('Error getting all students:', error);
+      return [];
+    }
   }
 
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
-    // Initialize topic progress
-    const TOPICS = [
-      "Array", "Matrix", "String", "Searching & Sorting", "Linked List",
-      "Binary Trees", "Binary Search Trees", "Greedy", "Backtracking",
-      "Stacks and Queues", "Heap", "Graph", "Trie", "Dynamic Programming"
-    ];
+    try {
+      // Initialize topic progress
+      const TOPICS = [
+        "Array", "Matrix", "String", "Searching & Sorting", "Linked List",
+        "Binary Trees", "Binary Search Trees", "Greedy", "Backtracking",
+        "Stacks and Queues", "Heap", "Graph", "Trie", "Dynamic Programming"
+      ];
 
-    const topicTotals: Record<string, number> = {
-      "Array": 25, "Matrix": 6, "String": 15, "Searching & Sorting": 18,
-      "Linked List": 14, "Binary Trees": 25, "Binary Search Trees": 10,
-      "Greedy": 12, "Backtracking": 9, "Stacks and Queues": 12,
-      "Heap": 6, "Graph": 15, "Trie": 6, "Dynamic Programming": 17
-    };
+      const topicTotals: Record<string, number> = {
+        "Array": 25, "Matrix": 6, "String": 15, "Searching & Sorting": 18,
+        "Linked List": 14, "Binary Trees": 25, "Binary Search Trees": 10,
+        "Greedy": 12, "Backtracking": 9, "Stacks and Queues": 12,
+        "Heap": 6, "Graph": 15, "Trie": 6, "Dynamic Programming": 17
+      };
 
-    const topicProgress = TOPICS.reduce((acc, topic) => ({
-      ...acc,
-      [topic]: { solved: 0, total: topicTotals[topic] || 0, percentage: 0 }
-    }), {});
+      const topicProgress = TOPICS.reduce((acc, topic) => ({
+        ...acc,
+        [topic]: { solved: 0, total: topicTotals[topic] || 0, percentage: 0 }
+      }), {});
 
-    const avatar = insertStudent.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${insertStudent.username}`;
-    
-    const result = await pool.query(
-      `INSERT INTO students (username, name, avatar, topic_progress) 
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [insertStudent.username, insertStudent.name, avatar, JSON.stringify(topicProgress)]
-    );
+      const avatar = insertStudent.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${insertStudent.username}`;
+      
+      const [student] = await db.insert(students).values({
+        username: insertStudent.username,
+        name: insertStudent.name,
+        avatar: avatar,
+        topicProgress: topicProgress,
+        difficultyStats: { easy: 0, medium: 0, hard: 0 },
+        weeklyProgress: {},
+        totalSolved: 0
+      }).returning();
 
-    const student = result.rows[0];
-    return {
-      id: student.id,
-      username: student.username,
-      name: student.name,
-      avatar: student.avatar,
-      totalSolved: student.total_solved,
-      weeklyProgress: student.weekly_progress || {},
-      topicProgress: student.topic_progress || {},
-      difficultyStats: student.difficulty_stats || { easy: 0, medium: 0, hard: 0 },
-      reflection: student.reflection,
-      lastUpdated: student.last_updated,
-      createdAt: student.created_at,
-    };
+      return student;
+    } catch (error) {
+      console.error('Error creating student:', error);
+      throw error;
+    }
   }
 
   async updateStudentProgress(id: number, updates: UpdateStudentProgress): Promise<Student | undefined> {

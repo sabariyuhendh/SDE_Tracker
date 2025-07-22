@@ -29,8 +29,8 @@ export default function LeaderboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#516395] p-6 flex items-center justify-center">
-        <div className="text-[#F4F4F4]">Loading leaderboard...</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-6 flex items-center justify-center">
+        <div className="text-white text-xl font-medium">Loading leaderboard...</div>
       </div>
     );
   }
@@ -68,93 +68,108 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#516395] p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button 
-            onClick={() => setLocation("/")} 
-            variant="ghost" 
-            size="sm"
-            className="text-[#F4F4F4] hover:bg-white/10"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <h1 className="text-3xl font-bold text-[#F4F4F4] flex items-center gap-3">
-            <Trophy className="w-8 h-8" />
-            Class Leaderboard
-          </h1>
-        </div>
-
-        {/* Sort Options */}
-        <div className="flex gap-4 mb-6">
-          <Button
-            onClick={() => setSortBy("totalSolved")}
-            variant={sortBy === "totalSolved" ? "default" : "ghost"}
-            className={sortBy === "totalSolved" ? "bg-white text-[#516395]" : "text-[#F4F4F4] hover:bg-white/10"}
-          >
-            Total Problems
-          </Button>
-          <Button
-            onClick={() => setSortBy("percentage")}
-            variant={sortBy === "percentage" ? "default" : "ghost"}
-            className={sortBy === "percentage" ? "bg-white text-[#516395]" : "text-[#F4F4F4] hover:bg-white/10"}
-          >
-            Completion %
-          </Button>
-          <Button
-            onClick={() => setSortBy("weeklyImprovement")}
-            variant={sortBy === "weeklyImprovement" ? "default" : "ghost"}
-            className={sortBy === "weeklyImprovement" ? "bg-white text-[#516395]" : "text-[#F4F4F4] hover:bg-white/10"}
-          >
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Weekly Progress
-          </Button>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={() => setLocation('/')}
+              variant="outline"
+              size="sm"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Button>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              Class Leaderboard
+            </h1>
+          </div>
+          
+          {/* Sort Controls */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={sortBy === "totalSolved" ? "default" : "outline"}
+              onClick={() => setSortBy("totalSolved")}
+              size="sm"
+              className={sortBy === "totalSolved" 
+                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white" 
+                : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+              }
+            >
+              <Trophy className="w-4 h-4 mr-2" />
+              Total Solved
+            </Button>
+            <Button
+              variant={sortBy === "percentage" ? "default" : "outline"}
+              onClick={() => setSortBy("percentage")}
+              size="sm"
+              className={sortBy === "percentage" 
+                ? "bg-gradient-to-r from-green-600 to-blue-600 text-white" 
+                : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+              }
+            >
+              <Star className="w-4 h-4 mr-2" />
+              Progress %
+            </Button>
+            <Button
+              variant={sortBy === "weeklyImprovement" ? "default" : "outline"}
+              onClick={() => setSortBy("weeklyImprovement")}
+              size="sm"
+              className={sortBy === "weeklyImprovement" 
+                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+              }
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Weekly Growth
+            </Button>
+          </div>
         </div>
 
         {/* Top 3 Podium */}
         {sortedStudents.length >= 3 && (
           <div className="grid grid-cols-3 gap-6 mb-8">
             {/* 2nd Place */}
-            <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover mt-8">
+            <Card className="bg-white/5 backdrop-blur-lg border-white/20 mt-8">
               <CardHeader className="text-center pb-4">
                 <Trophy className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <Avatar className="w-16 h-16 mx-auto mb-4">
                   <AvatarImage src={sortedStudents[1].avatar} alt={sortedStudents[1].name} />
-                  <AvatarFallback className="bg-white/20 text-[#F4F4F4]">
+                  <AvatarFallback className="bg-white/20 text-white">
                     {sortedStudents[1].name.split(" ").map(n => n[0]).join("")}
                   </AvatarFallback>
                 </Avatar>
-                <h3 className="font-bold">{sortedStudents[1].name}</h3>
-                <p className="text-[#E6E6FA] text-sm">@{sortedStudents[1].username}</p>
+                <h3 className="font-bold text-white">{sortedStudents[1].name}</h3>
+                <p className="text-gray-300 text-sm">@{sortedStudents[1].username}</p>
               </CardHeader>
               <CardContent className="text-center">
-                <div className="text-2xl font-bold mb-2">{sortedStudents[1].totalSolved}</div>
-                <div className="text-[#E6E6FA] text-sm">{sortedStudents[1].percentage}% complete</div>
+                <div className="text-2xl font-bold mb-2 text-white">{sortedStudents[1].totalSolved}</div>
+                <div className="text-gray-300 text-sm">{sortedStudents[1].percentage}% complete</div>
               </CardContent>
             </Card>
 
             {/* 1st Place */}
-            <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+            <Card className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 backdrop-blur-lg border-yellow-500/50">
               <CardHeader className="text-center pb-4">
                 <Trophy className="w-10 h-10 text-yellow-500 mx-auto mb-2" />
                 <Avatar className="w-20 h-20 mx-auto mb-4">
                   <AvatarImage src={sortedStudents[0].avatar} alt={sortedStudents[0].name} />
-                  <AvatarFallback className="bg-white/20 text-[#F4F4F4] text-lg">
+                  <AvatarFallback className="bg-yellow-500/20 text-white text-lg">
                     {sortedStudents[0].name.split(" ").map(n => n[0]).join("")}
                   </AvatarFallback>
                 </Avatar>
-                <h3 className="font-bold text-lg">{sortedStudents[0].name}</h3>
-                <p className="text-[#E6E6FA] text-sm">@{sortedStudents[0].username}</p>
+                <h3 className="font-bold text-lg text-white">{sortedStudents[0].name}</h3>
+                <p className="text-yellow-200 text-sm">@{sortedStudents[0].username}</p>
                 <Badge className="bg-yellow-500 text-black hover:bg-yellow-400 mt-2">
                   <Star className="w-3 h-3 mr-1" />
                   Champion
                 </Badge>
               </CardHeader>
               <CardContent className="text-center">
-                <div className="text-3xl font-bold mb-2">{sortedStudents[0].totalSolved}</div>
-                <div className="text-[#E6E6FA] text-sm">{sortedStudents[0].percentage}% complete</div>
+                <div className="text-3xl font-bold mb-2 text-white">{sortedStudents[0].totalSolved}</div>
+                <div className="text-yellow-200 text-sm">{sortedStudents[0].percentage}% complete</div>
               </CardContent>
             </Card>
 
