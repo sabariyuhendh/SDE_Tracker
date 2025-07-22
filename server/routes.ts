@@ -3,6 +3,7 @@ import { Router, type Request, type Response } from "express";
 import { storage } from "./storage";
 import { insertStudentSchema, updateStudentProgressSchema, insertWeeklyReflectionSchema } from "@shared/schema";
 import { z } from "zod";
+import { tufScraper } from "./scraper";
 
 const router = Router();
 
@@ -250,6 +251,76 @@ router.post("/api/admin/students/:id/reset", async (req: Request, res: Response)
     res.json({ student });
   } catch (error) {
     res.status(500).json({ error: "Failed to reset student progress" });
+  }
+});
+
+// TUF Scraper routes
+router.post("/api/students/:id/scrape", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const success = await tufScraper.updateStudentFromTUF(id);
+    
+    if (!success) {
+      return res.status(400).json({ error: "Failed to scrape student data" });
+    }
+    
+    const updatedStudent = await storage.getStudent(id);
+    res.json({ message: "Student data updated successfully", student: updatedStudent });
+  } catch (error) {
+    console.error("Error scraping student data:", error);
+    res.status(500).json({ error: "Failed to scrape student data" });
+  }
+});
+
+router.post("/api/scrape/all", async (req: Request, res: Response) => {
+  try {
+    // Run in background to avoid timeout
+    tufScraper.updateAllStudentsFromTUF().catch(console.error);
+    res.json({ message: "Bulk scraping started in background" });
+  } catch (error) {
+    console.error("Error starting bulk scrape:", error);
+    res.status(500).json({ error: "Failed to start bulk scraping" });
+  }
+});
+
+router.post("/api/scrape/start-auto", async (req: Request, res: Response) => {
+  try {
+    tufScraper.startAutoScraping();
+    res.json({ message: "Auto-scraping started (daily at 2 AM UTC)" });
+  } catch (error) {
+    console.error("Error starting auto-scraping:", error);
+    res.status(500).json({ error: "Failed to start auto-scraping" });
+  }
+});
+
+router.post("/api/scrape/stop-auto", async (req: Request, res: Response) => {
+  try {
+    tufScraper.stopAutoScraping();
+    res.json({ message: "Auto-scraping stopped" });
+  } catch (error) {
+    console.error("Error stopping auto-scraping:", error);
+    res.status(500).json({ error: "Failed to stop auto-scraping" });
+  }
+});
+
+// Test scraping endpoint for a specific TUF username
+router.post("/api/scrape/test", async (req: Request, res: Response) => {
+  try {
+    const { username } = req.body;
+    if (!username) {
+      return res.status(400).json({ error: "Username is required" });
+    }
+    
+    const scrapedData = await tufScraper.scrapeTUFProfile(username);
+    
+    if (!scrapedData) {
+      return res.status(400).json({ error: "Failed to scrape profile data" });
+    }
+    
+    res.json({ message: "Profile scraped successfully", data: scrapedData });
+  } catch (error) {
+    console.error("Error testing scrape:", error);
+    res.status(500).json({ error: "Failed to test scraping" });
   }
 });
 

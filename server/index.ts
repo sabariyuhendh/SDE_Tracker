@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db";
+import { tufScraper } from "./scraper";
 
 const app = express();
 app.use(express.json());
@@ -40,6 +41,9 @@ app.use((req, res, next) => {
 (async () => {
   // Initialize database
   await initializeDatabase();
+  
+  // Start TUF auto-scraping
+  tufScraper.startAutoScraping();
   
   const server = await registerRoutes(app);
 

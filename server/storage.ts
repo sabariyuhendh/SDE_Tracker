@@ -184,7 +184,7 @@ export class MemStorage implements IStorage {
       weekStart: insertReflection.weekStart,
       classStats: insertReflection.classStats ?? null,
       topicBreakdown: insertReflection.topicBreakdown ?? null,
-      highlights: Array.isArray(insertReflection.highlights) ? insertReflection.highlights : null,
+      highlights: insertReflection.highlights || [],
       notes: insertReflection.notes ?? null,
       createdAt: new Date(),
     };
@@ -202,7 +202,7 @@ export class MemStorage implements IStorage {
       weekStart: updates.weekStart ?? existing.weekStart,
       classStats: updates.classStats !== undefined ? updates.classStats : existing.classStats,
       topicBreakdown: updates.topicBreakdown !== undefined ? updates.topicBreakdown : existing.topicBreakdown,
-      highlights: Array.isArray(updates.highlights) ? updates.highlights : existing.highlights,
+      highlights: updates.highlights || existing.highlights || [],
       notes: updates.notes !== undefined ? updates.notes : existing.notes,
     };
 
@@ -400,7 +400,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStudent(id: number): Promise<boolean> {
     const result = await pool.query('DELETE FROM students WHERE id = $1', [id]);
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Weekly reflection methods
@@ -550,9 +550,9 @@ export class DatabaseStorage implements IStorage {
     const student = await this.getStudent(studentId);
     if (!student) return undefined;
 
-    const resetTopicProgress = Object.keys(student.topicProgress).reduce((acc, topic) => {
+    const resetTopicProgress = Object.keys(student.topicProgress || {}).reduce((acc, topic) => {
       acc[topic] = {
-        ...student.topicProgress[topic],
+        ...(student.topicProgress || {})[topic],
         solved: 0,
         percentage: 0
       };
