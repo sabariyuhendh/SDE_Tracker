@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { BarChart3, CheckSquare, Brain, Settings, Trophy, Moon, Sun } from 'lucide-react';
+import { BarChart3, CheckSquare, Brain, Settings, Trophy, Moon, Sun, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
 
@@ -38,7 +38,7 @@ export const Navigation = ({
         <h1 className="text-2xl font-bold text-[#F4F4F4] mr-6">TUF Class Tracker</h1>
         
         <div className="flex items-center gap-4">
-          {/* Leaderboard Button */}
+          {/* Additional Navigation */}
           <Button
             onClick={() => setLocation('/leaderboard')}
             variant="ghost"
@@ -46,6 +46,14 @@ export const Navigation = ({
           >
             <Trophy className="w-4 h-4 mr-2" />
             Leaderboard
+          </Button>
+          <Button
+            onClick={() => setLocation('/scraper')}
+            variant="ghost"
+            className="text-[#F4F4F4] hover:bg-white/10"
+          >
+            <Bot className="w-4 h-4 mr-2" />
+            TUF Scraper
           </Button>
           {/* Tab Navigation */}
           <div className="flex items-center space-x-1">

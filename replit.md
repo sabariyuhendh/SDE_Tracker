@@ -1,121 +1,111 @@
-# TUF Class Tracker
+# TUF Class Tracker with PostgreSQL and TUF Data Scraper
 
-## Overview
-A full-stack web application for tracking student progress in coding problems, specifically designed for TUF (Take U Forward) courses. The app allows instructors to monitor student progress across different topics, generate class statistics, and maintain weekly reflections.
+## Project Overview
+A comprehensive full-stack web application for tracking student progress on TUF (TakeUForward) platform. Built with React frontend, Express backend, PostgreSQL database, and automated TUF profile scraping using Puppeteer.
 
-**Current State:** Application is running successfully on port 5000 with full Express.js backend and React frontend setup.
+## Key Features
+✓ **Student Management** - Add, track, and manage student profiles
+✓ **TUF Profile Scraping** - Automated data extraction from TUF profiles using Puppeteer
+✓ **PostgreSQL Database** - Persistent data storage with proper schema management
+✓ **Progress Tracking** - Topic-wise progress, difficulty statistics, and weekly improvements
+✓ **Class Analytics** - Dashboard with comprehensive class statistics
+✓ **Weekly Reviews** - Class reflections and progress summaries
+✓ **Admin Panel** - Bulk operations and student management
+✓ **Automated Scheduling** - Daily scraping at 2 AM UTC using cron jobs
 
-## Project Architecture
+## Architecture
 
-### Backend (Express.js)
-- **Server**: Express.js with TypeScript
-- **Database**: PostgreSQL with direct SQL queries (no ORM per user request)
-- **Storage**: DatabaseStorage class implementing full CRUD operations
-- **API Routes**: RESTful endpoints + admin routes for bulk operations
-- **Port**: 5000 (serves both API and frontend)
-- **Admin Features**: Bulk student creation, manual problem marking, progress reset
+### Database (PostgreSQL)
+- **students** - Student profiles with TUF usernames, progress data, topic breakdown
+- **weekly_reflections** - Class summaries and weekly review data  
+- **admin_users** - Authentication and admin access
+- Uses Drizzle ORM for schema management and migrations
 
-### Frontend (React + Vite)
-- **Framework**: React with TypeScript
-- **Routing**: Wouter for client-side routing
-- **Styling**: TailwindCSS + shadcn/ui components
-- **State Management**: TanStack Query for server state
-- **Forms**: React Hook Form with Zod validation
+### Backend (Express + Node.js)
+- **API Routes** - RESTful endpoints for student management and scraping
+- **TUF Scraper** - Puppeteer-based web scraping system
+- **Storage Layer** - DatabaseStorage implementation with proper interfaces
+- **Scheduled Tasks** - Auto-scraping with node-cron
 
-### Database Schema
-- **Students**: Username, name, avatar, total_solved, topic_progress (JSONB), difficulty_stats (JSONB), weekly_progress (JSONB), reflection, timestamps
-- **Weekly Reflections**: week_start, class_stats (JSONB), topic_breakdown (JSONB), highlights (JSONB), notes, timestamps
-- **Admin Users**: Username, password, timestamps for admin authentication
+### Frontend (React + TypeScript)
+- **Dashboard** - Class overview with charts and statistics
+- **Student Manager** - Add/edit students with TUF username integration  
+- **Scraper Management** - Control panel for TUF data scraping
+- **Leaderboard** - Student rankings and progress visualization
+- **Weekly Review** - Class reflection and notes system
 
-### Key Features
-- **Student Management**: Create, view, update, delete students with avatar support
-- **Individual Student Reports**: Detailed pages showing topic progress, completion percentages, weekly activity
-- **Leaderboard System**: Sortable rankings by total problems, completion %, and weekly improvement
-- **Admin Panel**: Bulk CSV/JSON upload, manual problem marking, progress reset capabilities
-- **Progress Tracking**: Topic-wise and difficulty-level progress with visual indicators
-- **Custom Styling**: #516395 background with #F4F4F4 text for better contrast and elegance
-- **Interactive UI**: Smooth hover animations, clickable student cards, navigation to detail views
+## TUF Scraper System
 
-## Tech Stack
-- **Backend**: Node.js, Express.js, TypeScript
-- **Frontend**: React, TypeScript, Vite
-- **Database**: PostgreSQL with Drizzle ORM
-- **Styling**: TailwindCSS, shadcn/ui
-- **Validation**: Zod schemas
-- **Dev Tools**: tsx for TypeScript execution
+### Core Functionality
+- **Profile Scraping** - Extracts total problems solved, difficulty breakdown, topic progress
+- **Individual Updates** - Scrape specific students on-demand
+- **Bulk Operations** - Update all students in background
+- **Test Interface** - Test scraping with any TUF username
+- **Auto-scheduling** - Daily updates at 2 AM UTC
+- **Error Handling** - Robust error handling with retry logic
 
-## Project Structure
+### API Endpoints
+- `POST /api/students/:id/scrape` - Scrape individual student
+- `POST /api/scrape/all` - Bulk scrape all students  
+- `POST /api/scrape/test` - Test scraping with username
+- `POST /api/scrape/start-auto` - Enable daily auto-scraping
+- `POST /api/scrape/stop-auto` - Disable auto-scraping
+
+### Technical Implementation
+- **Puppeteer Configuration** - Headless browser with proper options for server deployment
+- **Data Extraction** - DOM parsing for TUF profile elements
+- **Background Processing** - Non-blocking bulk operations
+- **Progress Tracking** - Real-time scraping status and results
+- **Database Integration** - Direct updates to student records
+
+## Recent Changes (Latest)
+✓ **PostgreSQL Migration** - Converted from in-memory to persistent database storage
+✓ **TUF Scraper System** - Complete implementation with Puppeteer for profile data extraction
+✓ **Database Schema** - Proper PostgreSQL schema with Drizzle ORM
+✓ **Scraper Management UI** - Frontend interface for scraper control and testing  
+✓ **Auto-scheduling** - Daily cron job for automatic student data updates
+✓ **API Routes** - Complete scraper endpoints with error handling
+✓ **Server Integration** - Auto-start scraping on server initialization
+
+## File Structure
 ```
-├── server/
-│   ├── index.ts          # Main server entry point
-│   ├── routes.ts         # API routes
-│   ├── storage.ts        # Storage interface and implementation
-│   └── vite.ts           # Vite integration for development
-├── client/
-│   ├── src/
-│   │   ├── main.tsx      # Frontend entry point
-│   │   └── App.tsx       # Main app component
-│   └── index.html        # HTML template
-├── shared/
-│   └── schema.ts         # Database schemas and types
-└── package.json          # Dependencies and scripts
+server/
+├── scraper.ts          # TUF scraping system with Puppeteer
+├── db.ts              # PostgreSQL connection and schema
+├── storage.ts         # Database storage implementation
+├── routes.ts          # API endpoints including scraper routes
+└── index.ts           # Server startup with scraper initialization
+
+client/src/
+├── pages/
+│   └── ScraperManagement.tsx  # Scraper control interface
+├── components/          # Dashboard, student management, etc.
+└── App.tsx             # Routes including /scraper
+
+shared/
+└── schema.ts           # Drizzle schema definitions
 ```
 
-## Recent Changes
-- **2025-01-22**: Complete TUF Class Tracker Implementation
-  - ✓ Replaced in-memory storage with PostgreSQL database
-  - ✓ Implemented individual student detail pages with topic progress and star badges
-  - ✓ Created comprehensive leaderboard system with multiple sorting options
-  - ✓ Built admin panel with bulk upload, manual problem marking, and progress reset
-  - ✓ Applied custom styling (#516395 background, #F4F4F4 text) throughout the app
-  - ✓ Added smooth hover animations and card-hover effects
-  - ✓ Connected all API endpoints for students, leaderboard, and admin functions
-  - ✓ Added navigation to all new pages (student details, leaderboard)
-- **2024-07-22**: Fixed Hono to Express.js conversion in routes
-  - Converted all Hono routes to Express Router format
-  - Replaced zValidator with manual Zod validation
-  - Fixed TypeScript compatibility issues
-  - Application now starts successfully
-
-## Development Guidelines
-- Use Express.js for backend (not Hono)
-- Implement proper error handling with HTTP status codes
-- Use Zod schemas for request validation
-- Maintain type safety between frontend and backend
-- Keep storage interface abstract for future database integration
-
-## Running the Application
-```bash
-npm run dev  # Starts both backend and frontend on port 5000
-```
+## Database Schema
+- **students**: id, username (TUF), name, avatar, total_solved, topic_progress, difficulty_stats, weekly_progress, reflection, timestamps
+- **weekly_reflections**: id, week_start, class_stats, topic_breakdown, highlights, notes, created_at  
+- **admin_users**: id, username, password (for future authentication)
 
 ## User Preferences
-*To be updated as user preferences are expressed*
+- **Database**: PostgreSQL with Drizzle ORM (migrated from in-memory storage)
+- **Scraping**: Server-side Puppeteer implementation for TUF profile data
+- **Automation**: Daily scheduled scraping at 2 AM UTC
+- **UI**: Clean interface with scraper management and testing capabilities
+- **Architecture**: Full-stack with proper separation of concerns
 
-## API Endpoints
-### Student Management
-- `GET /api/students` - Get all students with progress data
-- `POST /api/students` - Create new student with initial topic setup
-- `GET /api/students/:id` - Get specific student details
-- `PUT /api/students/:id/progress` - Update student progress
-- `DELETE /api/students/:id` - Delete student
+## Current Status
+The application is fully functional with:
+- ✅ PostgreSQL database connected and initialized
+- ✅ TUF scraper system operational with Puppeteer
+- ✅ Frontend scraper management interface complete
+- ✅ Auto-scheduling enabled (daily at 2 AM UTC)
+- ✅ API endpoints for all scraper operations
+- ✅ Error handling and background processing
+- ✅ Test interface for scraper validation
 
-### Class Analytics  
-- `GET /api/class/stats` - Get class statistics and analytics
-- `GET /api/class/leaderboard` - Get student leaderboard with rankings
-
-### Weekly Reflections
-- `GET /api/reflections` - Get all weekly reflections
-- `POST /api/reflections` - Create weekly reflection
-- `GET /api/reflections/:weekStart` - Get specific reflection
-- `PUT /api/reflections/:weekStart` - Update weekly reflection
-
-### Admin Operations
-- `POST /api/admin/students/bulk` - Bulk create students from CSV/JSON
-- `POST /api/admin/students/:id/mark-solved` - Mark problems as solved for student
-- `POST /api/admin/students/:id/reset` - Reset student progress
-
-## Frontend Routes
-- `/` - Main dashboard with tabs (Dashboard, Students, Review, Admin)
-- `/student/:id` - Individual student detail page
-- `/leaderboard` - Full leaderboard with sorting options
+**Next Steps**: Test scraper with real TUF usernames and monitor daily auto-updates.
