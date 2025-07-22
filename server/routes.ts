@@ -202,6 +202,57 @@ router.put("/api/reflections/:weekStart", async (req: Request, res: Response) =>
   }
 });
 
+// Admin routes for bulk operations
+router.post("/api/admin/students/bulk", async (req: Request, res: Response) => {
+  try {
+    const result = z.array(insertStudentSchema).safeParse(req.body.students);
+    if (!result.success) {
+      return res.status(400).json({ error: "Invalid students data", details: result.error.errors });
+    }
+    
+    const createdStudents = await (storage as any).bulkCreateStudents(result.data);
+    res.status(201).json({ students: createdStudents, count: createdStudents.length });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to bulk create students" });
+  }
+});
+
+router.post("/api/admin/students/:id/mark-solved", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { topic, count } = req.body;
+    
+    if (!topic || !count || count <= 0) {
+      return res.status(400).json({ error: "Topic and count are required" });
+    }
+    
+    const student = await (storage as any).markProblemsAsSolved(id, topic, count);
+    
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+    
+    res.json({ student });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to mark problems as solved" });
+  }
+});
+
+router.post("/api/admin/students/:id/reset", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const student = await (storage as any).resetStudentProgress(id);
+    
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+    
+    res.json({ student });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to reset student progress" });
+  }
+});
+
 export function registerRoutes(app: any) {
   app.use(router);
   return app;

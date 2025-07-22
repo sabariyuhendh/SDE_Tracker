@@ -9,9 +9,11 @@ A full-stack web application for tracking student progress in coding problems, s
 
 ### Backend (Express.js)
 - **Server**: Express.js with TypeScript
-- **Storage**: In-memory storage (MemStorage) with PostgreSQL schema definitions
-- **API Routes**: RESTful endpoints for students, class stats, and weekly reflections
+- **Database**: PostgreSQL with direct SQL queries (no ORM per user request)
+- **Storage**: DatabaseStorage class implementing full CRUD operations
+- **API Routes**: RESTful endpoints + admin routes for bulk operations
 - **Port**: 5000 (serves both API and frontend)
+- **Admin Features**: Bulk student creation, manual problem marking, progress reset
 
 ### Frontend (React + Vite)
 - **Framework**: React with TypeScript
@@ -21,16 +23,18 @@ A full-stack web application for tracking student progress in coding problems, s
 - **Forms**: React Hook Form with Zod validation
 
 ### Database Schema
-- **Students**: Username, name, avatar, progress tracking across topics and difficulties
-- **Weekly Reflections**: Class statistics, topic breakdowns, highlights, and notes
-- **Users**: Admin authentication (optional)
+- **Students**: Username, name, avatar, total_solved, topic_progress (JSONB), difficulty_stats (JSONB), weekly_progress (JSONB), reflection, timestamps
+- **Weekly Reflections**: week_start, class_stats (JSONB), topic_breakdown (JSONB), highlights (JSONB), notes, timestamps
+- **Admin Users**: Username, password, timestamps for admin authentication
 
 ### Key Features
-- Student management (create, read, update, delete)
-- Progress tracking by topic and difficulty level
-- Class statistics and leaderboard
-- Weekly reflection system
-- Real-time progress updates
+- **Student Management**: Create, view, update, delete students with avatar support
+- **Individual Student Reports**: Detailed pages showing topic progress, completion percentages, weekly activity
+- **Leaderboard System**: Sortable rankings by total problems, completion %, and weekly improvement
+- **Admin Panel**: Bulk CSV/JSON upload, manual problem marking, progress reset capabilities
+- **Progress Tracking**: Topic-wise and difficulty-level progress with visual indicators
+- **Custom Styling**: #516395 background with #F4F4F4 text for better contrast and elegance
+- **Interactive UI**: Smooth hover animations, clickable student cards, navigation to detail views
 
 ## Tech Stack
 - **Backend**: Node.js, Express.js, TypeScript
@@ -58,6 +62,15 @@ A full-stack web application for tracking student progress in coding problems, s
 ```
 
 ## Recent Changes
+- **2025-01-22**: Complete TUF Class Tracker Implementation
+  - ✓ Replaced in-memory storage with PostgreSQL database
+  - ✓ Implemented individual student detail pages with topic progress and star badges
+  - ✓ Created comprehensive leaderboard system with multiple sorting options
+  - ✓ Built admin panel with bulk upload, manual problem marking, and progress reset
+  - ✓ Applied custom styling (#516395 background, #F4F4F4 text) throughout the app
+  - ✓ Added smooth hover animations and card-hover effects
+  - ✓ Connected all API endpoints for students, leaderboard, and admin functions
+  - ✓ Added navigation to all new pages (student details, leaderboard)
 - **2024-07-22**: Fixed Hono to Express.js conversion in routes
   - Converted all Hono routes to Express Router format
   - Replaced zValidator with manual Zod validation
@@ -80,14 +93,29 @@ npm run dev  # Starts both backend and frontend on port 5000
 *To be updated as user preferences are expressed*
 
 ## API Endpoints
-- `GET /api/students` - Get all students
-- `POST /api/students` - Create new student
-- `GET /api/students/:id` - Get specific student
+### Student Management
+- `GET /api/students` - Get all students with progress data
+- `POST /api/students` - Create new student with initial topic setup
+- `GET /api/students/:id` - Get specific student details
 - `PUT /api/students/:id/progress` - Update student progress
 - `DELETE /api/students/:id` - Delete student
-- `GET /api/class/stats` - Get class statistics
-- `GET /api/class/leaderboard` - Get student leaderboard
+
+### Class Analytics  
+- `GET /api/class/stats` - Get class statistics and analytics
+- `GET /api/class/leaderboard` - Get student leaderboard with rankings
+
+### Weekly Reflections
 - `GET /api/reflections` - Get all weekly reflections
 - `POST /api/reflections` - Create weekly reflection
 - `GET /api/reflections/:weekStart` - Get specific reflection
 - `PUT /api/reflections/:weekStart` - Update weekly reflection
+
+### Admin Operations
+- `POST /api/admin/students/bulk` - Bulk create students from CSV/JSON
+- `POST /api/admin/students/:id/mark-solved` - Mark problems as solved for student
+- `POST /api/admin/students/:id/reset` - Reset student progress
+
+## Frontend Routes
+- `/` - Main dashboard with tabs (Dashboard, Students, Review, Admin)
+- `/student/:id` - Individual student detail page
+- `/leaderboard` - Full leaderboard with sorting options

@@ -6,6 +6,8 @@ import { Router, Route } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import StudentDetailPage from "./components/StudentDetailPage";
+import LeaderboardPage from "./components/LeaderboardPage";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -14,6 +16,8 @@ const App = () => (
       <Sonner />
       <Router>
         <Route path="/" component={Index} />
+        <Route path="/student/:id" component={StudentDetailPage} />
+        <Route path="/leaderboard" component={LeaderboardPage} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="/:rest*" component={NotFound} />
       </Router>

@@ -1,5 +1,6 @@
 
 import { students, weeklyReflections, users, type Student, type InsertStudent, type UpdateStudentProgress, type WeeklyReflection, type InsertWeeklyReflection, type User, type InsertUser } from "@shared/schema";
+import { pool } from './db';
 
 export interface IStorage {
   // User methods
@@ -217,4 +218,352 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database Storage Implementation
+export class DatabaseStorage implements IStorage {
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const result = await pool.query('SELECT * FROM admin_users WHERE id = $1', [id]);
+    return result.rows[0] || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await pool.query('SELECT * FROM admin_users WHERE username = $1', [username]);
+    return result.rows[0] || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const result = await pool.query(
+      'INSERT INTO admin_users (username, password) VALUES ($1, $2) RETURNING *',
+      [insertUser.username, insertUser.password]
+    );
+    return result.rows[0];
+  }
+
+  // Student methods
+  async getStudent(id: number): Promise<Student | undefined> {
+    const result = await pool.query('SELECT * FROM students WHERE id = $1', [id]);
+    if (result.rows.length === 0) return undefined;
+    
+    const student = result.rows[0];
+    return {
+      id: student.id,
+      username: student.username,
+      name: student.name,
+      avatar: student.avatar,
+      totalSolved: student.total_solved,
+      weeklyProgress: student.weekly_progress || {},
+      topicProgress: student.topic_progress || {},
+      difficultyStats: student.difficulty_stats || { easy: 0, medium: 0, hard: 0 },
+      reflection: student.reflection,
+      lastUpdated: student.last_updated,
+      createdAt: student.created_at,
+    };
+  }
+
+  async getStudentByUsername(username: string): Promise<Student | undefined> {
+    const result = await pool.query('SELECT * FROM students WHERE username = $1', [username]);
+    if (result.rows.length === 0) return undefined;
+    
+    const student = result.rows[0];
+    return {
+      id: student.id,
+      username: student.username,
+      name: student.name,
+      avatar: student.avatar,
+      totalSolved: student.total_solved,
+      weeklyProgress: student.weekly_progress || {},
+      topicProgress: student.topic_progress || {},
+      difficultyStats: student.difficulty_stats || { easy: 0, medium: 0, hard: 0 },
+      reflection: student.reflection,
+      lastUpdated: student.last_updated,
+      createdAt: student.created_at,
+    };
+  }
+
+  async getAllStudents(): Promise<Student[]> {
+    const result = await pool.query('SELECT * FROM students ORDER BY total_solved DESC');
+    return result.rows.map(student => ({
+      id: student.id,
+      username: student.username,
+      name: student.name,
+      avatar: student.avatar,
+      totalSolved: student.total_solved,
+      weeklyProgress: student.weekly_progress || {},
+      topicProgress: student.topic_progress || {},
+      difficultyStats: student.difficulty_stats || { easy: 0, medium: 0, hard: 0 },
+      reflection: student.reflection,
+      lastUpdated: student.last_updated,
+      createdAt: student.created_at,
+    }));
+  }
+
+  async createStudent(insertStudent: InsertStudent): Promise<Student> {
+    // Initialize topic progress
+    const TOPICS = [
+      "Array", "Matrix", "String", "Searching & Sorting", "Linked List",
+      "Binary Trees", "Binary Search Trees", "Greedy", "Backtracking",
+      "Stacks and Queues", "Heap", "Graph", "Trie", "Dynamic Programming"
+    ];
+
+    const topicTotals: Record<string, number> = {
+      "Array": 25, "Matrix": 6, "String": 15, "Searching & Sorting": 18,
+      "Linked List": 14, "Binary Trees": 25, "Binary Search Trees": 10,
+      "Greedy": 12, "Backtracking": 9, "Stacks and Queues": 12,
+      "Heap": 6, "Graph": 15, "Trie": 6, "Dynamic Programming": 17
+    };
+
+    const topicProgress = TOPICS.reduce((acc, topic) => ({
+      ...acc,
+      [topic]: { solved: 0, total: topicTotals[topic] || 0, percentage: 0 }
+    }), {});
+
+    const avatar = insertStudent.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${insertStudent.username}`;
+    
+    const result = await pool.query(
+      `INSERT INTO students (username, name, avatar, topic_progress) 
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [insertStudent.username, insertStudent.name, avatar, JSON.stringify(topicProgress)]
+    );
+
+    const student = result.rows[0];
+    return {
+      id: student.id,
+      username: student.username,
+      name: student.name,
+      avatar: student.avatar,
+      totalSolved: student.total_solved,
+      weeklyProgress: student.weekly_progress || {},
+      topicProgress: student.topic_progress || {},
+      difficultyStats: student.difficulty_stats || { easy: 0, medium: 0, hard: 0 },
+      reflection: student.reflection,
+      lastUpdated: student.last_updated,
+      createdAt: student.created_at,
+    };
+  }
+
+  async updateStudentProgress(id: number, updates: UpdateStudentProgress): Promise<Student | undefined> {
+    const student = await this.getStudent(id);
+    if (!student) return undefined;
+
+    let newTotalSolved = student.totalSolved;
+    let newWeeklyProgress = { ...student.weeklyProgress };
+
+    // Calculate new total if topic progress updated
+    if (updates.topicProgress) {
+      newTotalSolved = Object.values(updates.topicProgress).reduce(
+        (sum, topic) => sum + topic.solved, 0
+      );
+    }
+
+    // Update weekly progress if there's an increase
+    if (updates.weeklyIncrease && updates.weeklyIncrease > 0) {
+      const currentWeek = this.getCurrentWeek();
+      newWeeklyProgress[currentWeek] = (newWeeklyProgress[currentWeek] || 0) + updates.weeklyIncrease;
+    }
+
+    const result = await pool.query(
+      `UPDATE students SET 
+       total_solved = $1,
+       topic_progress = $2,
+       difficulty_stats = $3,
+       reflection = $4,
+       weekly_progress = $5,
+       last_updated = CURRENT_TIMESTAMP
+       WHERE id = $6 RETURNING *`,
+      [
+        newTotalSolved,
+        JSON.stringify(updates.topicProgress || student.topicProgress),
+        JSON.stringify(updates.difficultyStats || student.difficultyStats),
+        updates.reflection !== undefined ? updates.reflection : student.reflection,
+        JSON.stringify(newWeeklyProgress),
+        id
+      ]
+    );
+
+    if (result.rows.length === 0) return undefined;
+
+    const updatedStudent = result.rows[0];
+    return {
+      id: updatedStudent.id,
+      username: updatedStudent.username,
+      name: updatedStudent.name,
+      avatar: updatedStudent.avatar,
+      totalSolved: updatedStudent.total_solved,
+      weeklyProgress: updatedStudent.weekly_progress || {},
+      topicProgress: updatedStudent.topic_progress || {},
+      difficultyStats: updatedStudent.difficulty_stats || { easy: 0, medium: 0, hard: 0 },
+      reflection: updatedStudent.reflection,
+      lastUpdated: updatedStudent.last_updated,
+      createdAt: updatedStudent.created_at,
+    };
+  }
+
+  async deleteStudent(id: number): Promise<boolean> {
+    const result = await pool.query('DELETE FROM students WHERE id = $1', [id]);
+    return result.rowCount > 0;
+  }
+
+  // Weekly reflection methods
+  async getWeeklyReflections(): Promise<WeeklyReflection[]> {
+    const result = await pool.query('SELECT * FROM weekly_reflections ORDER BY created_at DESC');
+    return result.rows.map(row => ({
+      id: row.id,
+      weekStart: row.week_start,
+      classStats: row.class_stats,
+      topicBreakdown: row.topic_breakdown || {},
+      highlights: row.highlights || [],
+      notes: row.notes,
+      createdAt: row.created_at,
+    }));
+  }
+
+  async getWeeklyReflection(weekStart: string): Promise<WeeklyReflection | undefined> {
+    const result = await pool.query('SELECT * FROM weekly_reflections WHERE week_start = $1', [weekStart]);
+    if (result.rows.length === 0) return undefined;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      weekStart: row.week_start,
+      classStats: row.class_stats,
+      topicBreakdown: row.topic_breakdown || {},
+      highlights: row.highlights || [],
+      notes: row.notes,
+      createdAt: row.created_at,
+    };
+  }
+
+  async createWeeklyReflection(insertReflection: InsertWeeklyReflection): Promise<WeeklyReflection> {
+    const result = await pool.query(
+      `INSERT INTO weekly_reflections (week_start, class_stats, topic_breakdown, highlights, notes)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [
+        insertReflection.weekStart,
+        JSON.stringify(insertReflection.classStats),
+        JSON.stringify(insertReflection.topicBreakdown || {}),
+        JSON.stringify(insertReflection.highlights || []),
+        insertReflection.notes
+      ]
+    );
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      weekStart: row.week_start,
+      classStats: row.class_stats,
+      topicBreakdown: row.topic_breakdown || {},
+      highlights: row.highlights || [],
+      notes: row.notes,
+      createdAt: row.created_at,
+    };
+  }
+
+  async updateWeeklyReflection(weekStart: string, updates: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined> {
+    const existing = await this.getWeeklyReflection(weekStart);
+    if (!existing) return undefined;
+
+    const result = await pool.query(
+      `UPDATE weekly_reflections SET
+       class_stats = $1,
+       topic_breakdown = $2,
+       highlights = $3,
+       notes = $4
+       WHERE week_start = $5 RETURNING *`,
+      [
+        JSON.stringify(updates.classStats !== undefined ? updates.classStats : existing.classStats),
+        JSON.stringify(updates.topicBreakdown !== undefined ? updates.topicBreakdown : existing.topicBreakdown),
+        JSON.stringify(updates.highlights !== undefined ? updates.highlights : existing.highlights),
+        updates.notes !== undefined ? updates.notes : existing.notes,
+        weekStart
+      ]
+    );
+
+    if (result.rows.length === 0) return undefined;
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      weekStart: row.week_start,
+      classStats: row.class_stats,
+      topicBreakdown: row.topic_breakdown || {},
+      highlights: row.highlights || [],
+      notes: row.notes,
+      createdAt: row.created_at,
+    };
+  }
+
+  private getCurrentWeek(): string {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay()); // Start of this week (Sunday)
+    return startOfWeek.toISOString().split('T')[0];
+  }
+
+  // Admin bulk operations
+  async bulkCreateStudents(students: InsertStudent[]): Promise<Student[]> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      const createdStudents: Student[] = [];
+      
+      for (const studentData of students) {
+        // Check if username already exists
+        const existing = await this.getStudentByUsername(studentData.username);
+        if (existing) {
+          continue; // Skip if exists
+        }
+        
+        const student = await this.createStudent(studentData);
+        createdStudents.push(student);
+      }
+      
+      await client.query('COMMIT');
+      return createdStudents;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async markProblemsAsSolved(studentId: number, topic: string, count: number): Promise<Student | undefined> {
+    const student = await this.getStudent(studentId);
+    if (!student) return undefined;
+
+    const topicProgress = { ...student.topicProgress };
+    if (topicProgress[topic]) {
+      topicProgress[topic].solved = Math.min(
+        topicProgress[topic].solved + count,
+        topicProgress[topic].total
+      );
+      topicProgress[topic].percentage = Math.round(
+        (topicProgress[topic].solved / topicProgress[topic].total) * 100
+      );
+    }
+
+    return this.updateStudentProgress(studentId, { topicProgress });
+  }
+
+  async resetStudentProgress(studentId: number): Promise<Student | undefined> {
+    const student = await this.getStudent(studentId);
+    if (!student) return undefined;
+
+    const resetTopicProgress = Object.keys(student.topicProgress).reduce((acc, topic) => {
+      acc[topic] = {
+        ...student.topicProgress[topic],
+        solved: 0,
+        percentage: 0
+      };
+      return acc;
+    }, {} as any);
+
+    return this.updateStudentProgress(studentId, {
+      topicProgress: resetTopicProgress,
+      difficultyStats: { easy: 0, medium: 0, hard: 0 }
+    });
+  }
+}
+
+export const storage = new DatabaseStorage();

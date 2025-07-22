@@ -4,8 +4,9 @@ import { ClassDashboard } from '@/components/ClassDashboard';
 import { StudentManager } from '@/components/StudentManager';
 import { ClassWeekendReview } from '@/components/ClassWeekendReview';
 import { Navigation } from '@/components/Navigation';
+import AdminPanel from '@/components/AdminPanel';
 
-type TabType = 'dashboard' | 'students' | 'review';
+type TabType = 'dashboard' | 'students' | 'review' | 'admin';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
@@ -40,7 +41,7 @@ const Index = () => {
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#516395]">
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Navigation */}
         <Navigation
@@ -55,6 +56,7 @@ const Index = () => {
           {activeTab === 'dashboard' && <ClassDashboard />}
           {activeTab === 'students' && <StudentManager />}
           {activeTab === 'review' && <ClassWeekendReview />}
+          {activeTab === 'admin' && <AdminPanel />}
         </main>
       </div>
     </div>
