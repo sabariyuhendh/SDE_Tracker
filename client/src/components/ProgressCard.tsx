@@ -27,16 +27,16 @@ export const ProgressCard = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`glass-card p-6 hover-lift ${className}`}
+      className={`bg-card border border-border p-6 transition-transform hover:scale-105 duration-300 ${className}`}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           {icon && <span className="text-2xl">{icon}</span>}
-          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+          <h3 className="text-lg font-light text-foreground">{title}</h3>
         </div>
         
         {trend !== 'neutral' && (
-          <Badge variant={trend === 'up' ? 'default' : 'secondary'} className="text-xs">
+          <Badge variant={trend === 'up' ? 'default' : 'secondary'} className="text-xs font-light">
             {trend === 'up' ? '↗' : '↘'}
           </Badge>
         )}
@@ -44,8 +44,8 @@ export const ProgressCard = ({
 
       <div className="space-y-3">
         <div className="flex items-baseline space-x-2">
-          <span className="text-3xl font-bold gradient-text-primary">{value}</span>
-          {total && <span className="text-muted-foreground">/ {total}</span>}
+          <span className="text-3xl font-light text-foreground">{value}</span>
+          {total && <span className="text-muted-foreground font-light">/ {total}</span>}
         </div>
 
         {total && (
@@ -54,7 +54,7 @@ export const ProgressCard = ({
               value={displayPercentage} 
               className="h-2 bg-secondary"
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground font-light">
               {displayPercentage}% completed
             </p>
           </div>
@@ -66,7 +66,7 @@ export const ProgressCard = ({
               value={percentage} 
               className="h-2 bg-secondary"
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground font-light">
               {percentage}% this week
             </p>
           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ClassDashboard } from '@/components/ClassDashboard';
 import { StudentManager } from '@/components/StudentManager';
 import { ClassWeekendReview } from '@/components/ClassWeekendReview';
@@ -8,10 +8,21 @@ import AdminPanel from '@/components/AdminPanel';
 
 type TabType = 'dashboard' | 'students' | 'review' | 'admin';
 
+const pageVariants = {
+  initial: { opacity: 0, y: 20 },
+  in: { opacity: 1, y: 0 },
+  out: { opacity: 0, y: -20 }
+};
+
+const pageTransition = {
+  type: "tween",
+  ease: "anticipate",
+  duration: 0.4
+};
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(true);
-
 
   // Theme management
   useEffect(() => {
@@ -39,9 +50,23 @@ const Index = () => {
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <ClassDashboard key="dashboard" />;
+      case 'students':
+        return <StudentManager key="students" />;
+      case 'review':
+        return <ClassWeekendReview key="review" />;
+      case 'admin':
+        return <AdminPanel key="admin" />;
+      default:
+        return <ClassDashboard key="dashboard" />;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Navigation */}
         <Navigation
@@ -51,12 +76,20 @@ const Index = () => {
           onToggleTheme={toggleTheme}
         />
 
-        {/* Main Content */}
+        {/* Main Content with smooth transitions */}
         <main className="container mx-auto px-6 pb-8">
-          {activeTab === 'dashboard' && <ClassDashboard />}
-          {activeTab === 'students' && <StudentManager />}
-          {activeTab === 'review' && <ClassWeekendReview />}
-          {activeTab === 'admin' && <AdminPanel />}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial="initial"
+              animate="in"
+              exit="out"
+              variants={pageVariants}
+              transition={pageTransition}
+            >
+              {renderTabContent()}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

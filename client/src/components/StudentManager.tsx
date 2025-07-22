@@ -29,7 +29,7 @@ export const StudentManager = () => {
   
   const { toast } = useToast();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newStudentData, setNewStudentData] = useState({ username: '', name: '' });
+  const [newStudentData, setNewStudentData] = useState({ userId: 'Volcaryx', username: '', name: '' });
   const [editingTopic, setEditingTopic] = useState<string | null>(null);
   const [tempValues, setTempValues] = useState<{ [key: string]: number }>({});
 
@@ -55,8 +55,8 @@ export const StudentManager = () => {
       return;
     }
 
-    addStudent(newStudentData.username, newStudentData.name);
-    setNewStudentData({ username: '', name: '' });
+    addStudent(newStudentData.username, newStudentData.name, newStudentData.userId);
+    setNewStudentData({ userId: 'Volcaryx', username: '', name: '' });
     setShowAddForm(false);
     
     toast({
@@ -127,18 +127,18 @@ export const StudentManager = () => {
     >
       {/* Student Selection & Add New */}
       <motion.div variants={itemVariants}>
-        <Card className="glass-card">
+        <Card className="bg-card border border-border">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <User className="w-5 h-5 text-primary" />
-                <span>Student Manager</span>
-                <Badge variant="outline">{students.length} students</Badge>
+                <User className="w-5 h-5 text-foreground" />
+                <span className="font-light">Student Manager</span>
+                <Badge variant="outline" className="font-light">{students.length} students</Badge>
               </div>
               <Button
                 onClick={() => setShowAddForm(!showAddForm)}
                 size="sm"
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 font-light"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Student</span>
@@ -152,7 +152,7 @@ export const StudentManager = () => {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="mb-6 p-4 rounded-xl bg-card/50 border border-primary/20"
+                  className="mb-6 p-4 rounded-xl bg-secondary border border-border"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>

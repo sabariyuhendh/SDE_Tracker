@@ -21,26 +21,26 @@ export const TopicChart = ({ data, className = '' }: TopicChartProps) => {
     percentage: stats.percentage
   }));
 
-  // Color palette for topics
+  // Black and white color palette for topics
   const colors = [
     'hsl(var(--primary))',
+    'hsl(var(--secondary))',
+    'hsl(var(--muted))',
     'hsl(var(--accent))',
-    'hsl(var(--success))',
-    'hsl(var(--warning))',
-    'hsl(var(--destructive))',
-    'hsl(var(--primary-glow))'
+    'hsl(var(--border))',
+    'hsl(var(--foreground))'
   ];
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="glass-card p-3 border border-glass-border">
-          <p className="font-medium text-foreground">{data.name}</p>
-          <p className="text-sm text-muted-foreground">
+        <div className="bg-card border border-border p-3">
+          <p className="font-light text-foreground">{data.name}</p>
+          <p className="text-sm text-muted-foreground font-light">
             {data.completed} / {data.total} completed
           </p>
-          <p className="text-sm text-primary font-medium">
+          <p className="text-sm text-primary font-light">
             {data.percentage}%
           </p>
         </div>
@@ -69,13 +69,13 @@ export const TopicChart = ({ data, className = '' }: TopicChartProps) => {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`glass-card p-6 ${className}`}
+      className={`bg-card border border-border p-6 ${className}`}
     >
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-foreground mb-2">
+        <h3 className="text-lg font-light text-foreground mb-2">
           Topic-wise Progress
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground font-light">
           Completion percentage by topic
         </p>
       </div>

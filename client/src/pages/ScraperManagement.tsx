@@ -114,7 +114,7 @@ export default function ScraperManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -122,7 +122,7 @@ export default function ScraperManagement() {
               onClick={() => setLocation('/')}
               variant="outline"
               size="sm"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              className="bg-card border border-border text-foreground hover:bg-secondary font-light"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Home

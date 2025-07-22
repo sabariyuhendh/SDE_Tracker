@@ -56,7 +56,7 @@ export const ClassDashboard = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-[#F4F4F4]">Loading dashboard...</div>
+        <div className="text-foreground font-light">Loading dashboard...</div>
       </div>
     );
   }
@@ -66,12 +66,12 @@ export const ClassDashboard = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex items-center justify-center min-h-[400px] bg-white/10 rounded-lg border border-white/20"
+        className="flex items-center justify-center min-h-[400px] bg-card rounded-lg border border-border"
       >
         <div className="text-center space-y-4">
-          <Users className="w-12 h-12 mx-auto text-[#E6E6FA]" />
-          <h3 className="text-xl font-medium text-[#F4F4F4]">No Students Added Yet</h3>
-          <p className="text-[#E6E6FA]">Add your first student to see class progress</p>
+          <Users className="w-12 h-12 mx-auto text-muted-foreground" />
+          <h3 className="text-xl font-light text-foreground">No Students Added Yet</h3>
+          <p className="text-muted-foreground font-light">Add your first student to see class progress</p>
         </div>
       </motion.div>
     );
@@ -87,15 +87,15 @@ export const ClassDashboard = () => {
       {/* Class Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div variants={itemVariants}>
-          <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+          <Card className="bg-card border border-border text-card-foreground transition-transform hover:scale-105 duration-300">
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-white/20">
-                  <Users className="w-6 h-6 text-[#F4F4F4]" />
+                <div className="p-3 rounded-full bg-secondary">
+                  <Users className="w-6 h-6 text-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm text-[#E6E6FA]">Total Students</p>
-                  <p className="text-2xl font-bold">{students.length}</p>
+                  <p className="text-sm text-muted-foreground font-light">Total Students</p>
+                  <p className="text-2xl font-light">{students.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -103,16 +103,16 @@ export const ClassDashboard = () => {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+          <Card className="bg-card border border-border text-card-foreground transition-transform hover:scale-105 duration-300">
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-white/20">
-                  <Trophy className="w-6 h-6 text-[#F4F4F4]" />
+                <div className="p-3 rounded-full bg-secondary">
+                  <Trophy className="w-6 h-6 text-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm text-[#E6E6FA]">Problems Solved</p>
-                  <p className="text-2xl font-bold">{stats.totalSolved || 0}</p>
-                  <p className="text-xs text-[#E6E6FA]">
+                  <p className="text-sm text-muted-foreground font-light">Problems Solved</p>
+                  <p className="text-2xl font-light">{stats.totalSolved || 0}</p>
+                  <p className="text-xs text-muted-foreground font-light">
                     Avg: {stats.averageSolved || 0} per student
                   </p>
                 </div>
@@ -122,16 +122,16 @@ export const ClassDashboard = () => {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+          <Card className="bg-card border border-border text-card-foreground transition-transform hover:scale-105 duration-300">
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-green-500/20">
-                  <TrendingUp className="w-6 h-6 text-green-400" />
+                <div className="p-3 rounded-full bg-secondary">
+                  <TrendingUp className="w-6 h-6 text-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm text-[#E6E6FA]">This Week</p>
-                  <p className="text-2xl font-bold">{stats.weeklyProgress || 0}</p>
-                  <p className="text-xs text-[#E6E6FA]">
+                  <p className="text-sm text-muted-foreground font-light">This Week</p>
+                  <p className="text-2xl font-light">{stats.weeklyProgress || 0}</p>
+                  <p className="text-xs text-muted-foreground font-light">
                     Active students
                   </p>
                 </div>
@@ -141,18 +141,18 @@ export const ClassDashboard = () => {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+          <Card className="bg-card border border-border text-card-foreground transition-transform hover:scale-105 duration-300">
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-blue-500/20">
-                  <Calendar className="w-6 h-6 text-blue-400" />
+                <div className="p-3 rounded-full bg-secondary">
+                  <Calendar className="w-6 h-6 text-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm text-[#E6E6FA]">Avg Completion</p>
-                  <p className="text-2xl font-bold">{stats.averageCompletion || 0}%</p>
+                  <p className="text-sm text-muted-foreground font-light">Avg Completion</p>
+                  <p className="text-2xl font-light">{stats.averageCompletion || 0}%</p>
                   <Progress 
                     value={stats.averageCompletion || 0} 
-                    className="h-2 mt-2 bg-white/20"
+                    className="h-2 mt-2 bg-secondary"
                   />
                 </div>
               </div>
@@ -164,18 +164,18 @@ export const ClassDashboard = () => {
       {/* Class Leaderboard and Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div variants={itemVariants}>
-          <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+          <Card className="bg-card border border-border text-card-foreground transition-transform hover:scale-105 duration-300">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Trophy className="w-5 h-5 text-yellow-500" />
-                  <span>Top Performers</span>
+                  <Trophy className="w-5 h-5 text-foreground" />
+                  <span className="font-light">Top Performers</span>
                 </div>
                 <Button 
                   onClick={() => setLocation('/leaderboard')}
                   variant="ghost" 
                   size="sm"
-                  className="text-[#E6E6FA] hover:bg-white/10"
+                  className="text-muted-foreground hover:bg-secondary font-light"
                 >
                   View All
                 </Button>
@@ -188,40 +188,40 @@ export const ClassDashboard = () => {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="flex items-center space-x-4 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                  className="flex items-center space-x-4 p-3 rounded-lg bg-secondary hover:bg-accent transition-colors cursor-pointer"
                   onClick={() => setLocation(`/student/${student.id}`)}
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                    index === 0 ? 'bg-yellow-500 text-black' :
-                    index === 1 ? 'bg-gray-400 text-black' :
-                    index === 2 ? 'bg-amber-600 text-white' :
-                    'bg-white/20 text-[#F4F4F4]'
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-light ${
+                    index === 0 ? 'bg-primary text-primary-foreground' :
+                    index === 1 ? 'bg-secondary text-secondary-foreground' :
+                    index === 2 ? 'bg-muted text-muted-foreground' :
+                    'bg-accent text-accent-foreground'
                   }`}>
                     {index + 1}
                   </div>
                   
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={student.avatar} alt={student.name} />
-                    <AvatarFallback className="bg-white/20 text-[#F4F4F4]">
+                    <AvatarFallback className="bg-secondary text-foreground font-light">
                       {student.name.split(" ").map(n => n[0]).join("")}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div className="flex-1">
-                    <p className="font-medium">{student.name}</p>
-                    <p className="text-sm text-[#E6E6FA]">@{student.username}</p>
+                    <p className="font-light">{student.name}</p>
+                    <p className="text-sm text-muted-foreground font-light">@{student.username}</p>
                   </div>
                   
                   <div className="text-right">
-                    <p className="font-bold text-[#F4F4F4]">{student.totalSolved}</p>
-                    <p className="text-xs text-[#E6E6FA]">
+                    <p className="font-light text-foreground">{student.totalSolved}</p>
+                    <p className="text-xs text-muted-foreground font-light">
                       {student.percentage}%
                     </p>
                   </div>
                 </motion.div>
               ))}
               {leaderboard.length === 0 && (
-                <p className="text-center text-[#E6E6FA] py-4">No students yet</p>
+                <p className="text-center text-muted-foreground py-4 font-light">No students yet</p>
               )}
             </CardContent>
           </Card>

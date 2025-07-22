@@ -50,8 +50,10 @@ export const useClassProgress = () => {
   }, [weeklyReflections, loading]);
 
   // Add new student
-  const addStudent = (username: string, name: string) => {
+  const addStudent = (username: string, name: string, userId: string = 'Volcaryx') => {
     const newStudent = createNewStudent(username, name);
+    // Add userId to student data
+    (newStudent as any).userId = userId;
     setStudents(prev => [...prev, newStudent]);
     if (!selectedStudent) {
       setSelectedStudent(newStudent.id);

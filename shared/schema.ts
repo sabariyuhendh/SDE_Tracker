@@ -5,6 +5,7 @@ import { z } from "zod";
 // Students table for TUF Class Tracker
 export const students = pgTable("students", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().default("Volcaryx"), // User ID for student tracking
   username: text("username").notNull().unique(), // TUF username
   name: text("name").notNull(),
   avatar: text("avatar"),
@@ -57,6 +58,7 @@ export const users = pgTable("users", {
 
 // Zod schemas
 export const insertStudentSchema = createInsertSchema(students).pick({
+  userId: true,
   username: true,
   name: true,
   avatar: true,

@@ -14,19 +14,19 @@ interface HeatmapCalendarProps {
 
 export const HeatmapCalendar = ({ data, className = '' }: HeatmapCalendarProps) => {
   const getIntensityClass = (level: number) => {
-    const baseClasses = "w-8 h-8 rounded-lg border border-glass-border transition-all duration-200 hover:scale-110";
+    const baseClasses = "w-8 h-8 rounded-lg border border-border transition-all duration-200 hover:scale-110";
     
     switch (level) {
       case 0:
         return `${baseClasses} bg-secondary`;
       case 1:
-        return `${baseClasses} bg-primary/20`;
+        return `${baseClasses} bg-muted`;
       case 2:
-        return `${baseClasses} bg-primary/40`;
+        return `${baseClasses} bg-accent`;
       case 3:
         return `${baseClasses} bg-primary/60`;
       case 4:
-        return `${baseClasses} bg-primary glow-primary`;
+        return `${baseClasses} bg-primary`;
       default:
         return `${baseClasses} bg-secondary`;
     }
@@ -50,13 +50,13 @@ export const HeatmapCalendar = ({ data, className = '' }: HeatmapCalendarProps) 
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`glass-card p-6 ${className}`}
+      className={`bg-card border border-border p-6 ${className}`}
     >
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-foreground mb-2">
+        <h3 className="text-lg font-light text-foreground mb-2">
           Weekly Activity
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground font-light">
           Problems solved in the last 7 days
         </p>
       </div>

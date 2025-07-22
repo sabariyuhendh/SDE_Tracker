@@ -29,8 +29,8 @@ export default function LeaderboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-6 flex items-center justify-center">
-        <div className="text-white text-xl font-medium">Loading leaderboard...</div>
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-foreground text-xl font-light">Loading leaderboard...</div>
       </div>
     );
   }
@@ -54,21 +54,21 @@ export default function LeaderboardPage() {
   });
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-500" />;
-    if (rank === 2) return <Trophy className="w-5 h-5 text-gray-400" />;
-    if (rank === 3) return <Trophy className="w-5 h-5 text-amber-600" />;
-    return <span className="w-5 h-5 flex items-center justify-center text-sm font-bold">#{rank}</span>;
+    if (rank === 1) return <Trophy className="w-5 h-5 text-foreground" />;
+    if (rank === 2) return <Trophy className="w-5 h-5 text-muted-foreground" />;
+    if (rank === 3) return <Trophy className="w-5 h-5 text-accent-foreground" />;
+    return <span className="w-5 h-5 flex items-center justify-center text-sm font-light">#{rank}</span>;
   };
 
   const getRankBadge = (rank: number) => {
-    if (rank === 1) return <Badge className="bg-yellow-500 text-black hover:bg-yellow-400">1st Place</Badge>;
-    if (rank === 2) return <Badge className="bg-gray-400 text-black hover:bg-gray-300">2nd Place</Badge>;
-    if (rank === 3) return <Badge className="bg-amber-600 text-white hover:bg-amber-500">3rd Place</Badge>;
+    if (rank === 1) return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90 font-light">1st Place</Badge>;
+    if (rank === 2) return <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-light">2nd Place</Badge>;
+    if (rank === 3) return <Badge className="bg-accent text-accent-foreground hover:bg-accent/90 font-light">3rd Place</Badge>;
     return null;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -77,12 +77,12 @@ export default function LeaderboardPage() {
               onClick={() => setLocation('/')}
               variant="outline"
               size="sm"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              className="bg-card border border-border text-foreground hover:bg-secondary font-light"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Home
             </Button>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-light text-foreground">
               Class Leaderboard
             </h1>
           </div>
@@ -94,8 +94,8 @@ export default function LeaderboardPage() {
               onClick={() => setSortBy("totalSolved")}
               size="sm"
               className={sortBy === "totalSolved" 
-                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white" 
-                : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                ? "bg-primary text-primary-foreground font-light" 
+                : "bg-card border border-border text-foreground hover:bg-secondary font-light"
               }
             >
               <Trophy className="w-4 h-4 mr-2" />
@@ -106,8 +106,8 @@ export default function LeaderboardPage() {
               onClick={() => setSortBy("percentage")}
               size="sm"
               className={sortBy === "percentage" 
-                ? "bg-gradient-to-r from-green-600 to-blue-600 text-white" 
-                : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                ? "bg-primary text-primary-foreground font-light" 
+                : "bg-card border border-border text-foreground hover:bg-secondary font-light"
               }
             >
               <Star className="w-4 h-4 mr-2" />
@@ -118,8 +118,8 @@ export default function LeaderboardPage() {
               onClick={() => setSortBy("weeklyImprovement")}
               size="sm"
               className={sortBy === "weeklyImprovement" 
-                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                ? "bg-primary text-primary-foreground font-light" 
+                : "bg-card border border-border text-foreground hover:bg-secondary font-light"
               }
             >
               <TrendingUp className="w-4 h-4 mr-2" />

@@ -47,9 +47,9 @@ export class MemStorage implements IStorage {
   private initializeSampleData() {
     // Add sample students
     const sampleStudents = [
-      { username: "student1", name: "Alice Johnson" },
-      { username: "student2", name: "Bob Smith" },
-      { username: "student3", name: "Charlie Brown" },
+      { userId: "Volcaryx", username: "student1", name: "Alice Johnson" },
+      { userId: "Volcaryx", username: "student2", name: "Bob Smith" },
+      { userId: "Volcaryx", username: "student3", name: "Charlie Brown" },
     ];
 
     sampleStudents.forEach(student => {
@@ -115,6 +115,7 @@ export class MemStorage implements IStorage {
 
     const student: Student = {
       id,
+      userId: insertStudent.userId || 'Volcaryx',
       username: insertStudent.username,
       name: insertStudent.name,
       avatar: insertStudent.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${insertStudent.username}`,
