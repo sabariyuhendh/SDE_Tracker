@@ -86,17 +86,17 @@
 @layer base {
   :root {
     /* Apple-inspired luxury color system */
-    --background: 255 20% 25%;  /* #614385 base */
+    --background: 255 20% 22%;  /* #516395 base */
     --foreground: 240 15% 94%;  /* #f0f2f5 - Primary white tint */
 
     /* Glass Cards with Apple-style blur */
-    --card: 255 20% 30%;
+    --card: 255 20% 27%;
     --card-foreground: 240 15% 94%;
-    --glass: 255 20% 30% / 0.6;
+    --glass: 255 20% 27% / 0.6;
     --glass-border: 255 47% 55% / 0.2;
 
     /* Popover */
-    --popover: 255 20% 25%;
+    --popover: 255 20% 22%;
     --popover-foreground: 240 15% 94%;
 
     /* Primary - Gold accent */
@@ -141,7 +141,7 @@
     --gradient-primary: linear-gradient(135deg, hsl(255 47% 55%), hsl(255 35% 65%));
     --gradient-accent: linear-gradient(135deg, hsl(255 47% 55%), hsl(255 35% 65%));
     --gradient-glass: linear-gradient(145deg, hsl(255 20% 30% / 0.6), hsl(255 20% 35% / 0.4));
-    --gradient-hero: linear-gradient(135deg, hsl(255 20% 25%), hsl(255 25% 35%));
+    --gradient-hero: linear-gradient(135deg, hsl(255 20% 22%), hsl(255 25% 32%));
 
     /* Apple-style shadows */
     --shadow-glass: 0 25px 50px -12px hsl(255 20% 15% / 0.5);
