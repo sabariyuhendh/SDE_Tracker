@@ -134,7 +134,8 @@
   }
 
   body {
-    @apply bg-background text-foreground font-inter antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
     background: var(--gradient-hero);
     min-height: 100vh;
   }
@@ -147,9 +148,10 @@
 @layer components {
   /* Glass Card Component */
   .glass-card {
-    @apply rounded-2xl border border-glass-border backdrop-blur-xl;
+    @apply rounded-2xl border backdrop-blur-xl;
     background: var(--gradient-glass);
     box-shadow: var(--shadow-glass);
+    border-color: hsl(var(--glass-border));
   }
 
   /* Glowing Effects */
