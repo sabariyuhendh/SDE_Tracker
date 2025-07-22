@@ -1,6 +1,6 @@
 
 import { students, weeklyReflections, users, type Student, type InsertStudent, type UpdateStudentProgress, type WeeklyReflection, type InsertWeeklyReflection, type User, type InsertUser } from "@shared/schema";
-import { db } from './db';
+import { db, pool } from './db';
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
@@ -324,154 +324,90 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateStudentProgress(id: number, updates: UpdateStudentProgress): Promise<Student | undefined> {
-    const student = await this.getStudent(id);
-    if (!student) return undefined;
+    try {
+      const currentStudent = await this.getStudent(id);
+      if (!currentStudent) return undefined;
 
-    let newTotalSolved = student.totalSolved;
-    let newWeeklyProgress = { ...student.weeklyProgress };
+      // Calculate new total solved from topic progress
+      let newTotalSolved = currentStudent.totalSolved;
+      if (updates.topicProgress) {
+        newTotalSolved = Object.values(updates.topicProgress).reduce(
+          (sum, topic) => sum + topic.solved, 0
+        );
+      }
 
-    // Calculate new total if topic progress updated
-    if (updates.topicProgress) {
-      newTotalSolved = Object.values(updates.topicProgress).reduce(
-        (sum, topic) => sum + topic.solved, 0
-      );
+      const [updated] = await db
+        .update(students)
+        .set({
+          totalSolved: newTotalSolved,
+          topicProgress: updates.topicProgress || currentStudent.topicProgress,
+          difficultyStats: updates.difficultyStats || currentStudent.difficultyStats,
+          weeklyProgress: updates.weeklyProgress || currentStudent.weeklyProgress,
+          lastUpdated: new Date(),
+        })
+        .where(eq(students.id, id))
+        .returning();
+
+      return updated;
+    } catch (error) {
+      console.error('Error updating student progress:', error);
+      return undefined;
     }
-
-    // Update weekly progress if there's an increase
-    if (updates.weeklyIncrease && updates.weeklyIncrease > 0) {
-      const currentWeek = this.getCurrentWeek();
-      newWeeklyProgress[currentWeek] = (newWeeklyProgress[currentWeek] || 0) + updates.weeklyIncrease;
-    }
-
-    const result = await pool.query(
-      `UPDATE students SET 
-       total_solved = $1,
-       topic_progress = $2,
-       difficulty_stats = $3,
-       reflection = $4,
-       weekly_progress = $5,
-       last_updated = CURRENT_TIMESTAMP
-       WHERE id = $6 RETURNING *`,
-      [
-        newTotalSolved,
-        JSON.stringify(updates.topicProgress || student.topicProgress),
-        JSON.stringify(updates.difficultyStats || student.difficultyStats),
-        updates.reflection !== undefined ? updates.reflection : student.reflection,
-        JSON.stringify(newWeeklyProgress),
-        id
-      ]
-    );
-
-    if (result.rows.length === 0) return undefined;
-
-    const updatedStudent = result.rows[0];
-    return {
-      id: updatedStudent.id,
-      username: updatedStudent.username,
-      name: updatedStudent.name,
-      avatar: updatedStudent.avatar,
-      totalSolved: updatedStudent.total_solved,
-      weeklyProgress: updatedStudent.weekly_progress || {},
-      topicProgress: updatedStudent.topic_progress || {},
-      difficultyStats: updatedStudent.difficulty_stats || { easy: 0, medium: 0, hard: 0 },
-      reflection: updatedStudent.reflection,
-      lastUpdated: updatedStudent.last_updated,
-      createdAt: updatedStudent.created_at,
-    };
   }
 
   async deleteStudent(id: number): Promise<boolean> {
-    const result = await pool.query('DELETE FROM students WHERE id = $1', [id]);
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(students).where(eq(students.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      return false;
+    }
   }
 
   // Weekly reflection methods
   async getWeeklyReflections(): Promise<WeeklyReflection[]> {
-    const result = await pool.query('SELECT * FROM weekly_reflections ORDER BY created_at DESC');
-    return result.rows.map(row => ({
-      id: row.id,
-      weekStart: row.week_start,
-      classStats: row.class_stats,
-      topicBreakdown: row.topic_breakdown || {},
-      highlights: row.highlights || [],
-      notes: row.notes,
-      createdAt: row.created_at,
-    }));
+    try {
+      const reflections = await db.select().from(weeklyReflections).orderBy(weeklyReflections.weekStart);
+      return reflections;
+    } catch (error) {
+      console.error('Error getting weekly reflections:', error);
+      return [];
+    }
   }
 
   async getWeeklyReflection(weekStart: string): Promise<WeeklyReflection | undefined> {
-    const result = await pool.query('SELECT * FROM weekly_reflections WHERE week_start = $1', [weekStart]);
-    if (result.rows.length === 0) return undefined;
-    
-    const row = result.rows[0];
-    return {
-      id: row.id,
-      weekStart: row.week_start,
-      classStats: row.class_stats,
-      topicBreakdown: row.topic_breakdown || {},
-      highlights: row.highlights || [],
-      notes: row.notes,
-      createdAt: row.created_at,
-    };
+    try {
+      const [reflection] = await db.select().from(weeklyReflections).where(eq(weeklyReflections.weekStart, weekStart));
+      return reflection || undefined;
+    } catch (error) {
+      console.error('Error getting weekly reflection:', error);
+      return undefined;
+    }
   }
 
   async createWeeklyReflection(insertReflection: InsertWeeklyReflection): Promise<WeeklyReflection> {
-    const result = await pool.query(
-      `INSERT INTO weekly_reflections (week_start, class_stats, topic_breakdown, highlights, notes)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [
-        insertReflection.weekStart,
-        JSON.stringify(insertReflection.classStats),
-        JSON.stringify(insertReflection.topicBreakdown || {}),
-        JSON.stringify(insertReflection.highlights || []),
-        insertReflection.notes
-      ]
-    );
-
-    const row = result.rows[0];
-    return {
-      id: row.id,
-      weekStart: row.week_start,
-      classStats: row.class_stats,
-      topicBreakdown: row.topic_breakdown || {},
-      highlights: row.highlights || [],
-      notes: row.notes,
-      createdAt: row.created_at,
-    };
+    try {
+      const [reflection] = await db.insert(weeklyReflections).values(insertReflection).returning();
+      return reflection;
+    } catch (error) {
+      console.error('Error creating weekly reflection:', error);
+      throw error;
+    }
   }
 
   async updateWeeklyReflection(weekStart: string, updates: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined> {
-    const existing = await this.getWeeklyReflection(weekStart);
-    if (!existing) return undefined;
-
-    const result = await pool.query(
-      `UPDATE weekly_reflections SET
-       class_stats = $1,
-       topic_breakdown = $2,
-       highlights = $3,
-       notes = $4
-       WHERE week_start = $5 RETURNING *`,
-      [
-        JSON.stringify(updates.classStats !== undefined ? updates.classStats : existing.classStats),
-        JSON.stringify(updates.topicBreakdown !== undefined ? updates.topicBreakdown : existing.topicBreakdown),
-        JSON.stringify(updates.highlights !== undefined ? updates.highlights : existing.highlights),
-        updates.notes !== undefined ? updates.notes : existing.notes,
-        weekStart
-      ]
-    );
-
-    if (result.rows.length === 0) return undefined;
-
-    const row = result.rows[0];
-    return {
-      id: row.id,
-      weekStart: row.week_start,
-      classStats: row.class_stats,
-      topicBreakdown: row.topic_breakdown || {},
-      highlights: row.highlights || [],
-      notes: row.notes,
-      createdAt: row.created_at,
-    };
+    try {
+      const [reflection] = await db
+        .update(weeklyReflections)
+        .set(updates)
+        .where(eq(weeklyReflections.weekStart, weekStart))
+        .returning();
+      return reflection || undefined;
+    } catch (error) {
+      console.error('Error updating weekly reflection:', error);
+      return undefined;
+    }
   }
 
   private getCurrentWeek(): string {
@@ -482,14 +418,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Admin bulk operations
-  async bulkCreateStudents(students: InsertStudent[]): Promise<Student[]> {
-    const client = await pool.connect();
+  async bulkCreateStudents(studentsData: InsertStudent[]): Promise<Student[]> {
     try {
-      await client.query('BEGIN');
-      
       const createdStudents: Student[] = [];
       
-      for (const studentData of students) {
+      for (const studentData of studentsData) {
         // Check if username already exists
         const existing = await this.getStudentByUsername(studentData.username);
         if (existing) {
@@ -500,13 +433,10 @@ export class DatabaseStorage implements IStorage {
         createdStudents.push(student);
       }
       
-      await client.query('COMMIT');
       return createdStudents;
     } catch (error) {
-      await client.query('ROLLBACK');
+      console.error('Error bulk creating students:', error);
       throw error;
-    } finally {
-      client.release();
     }
   }
 
