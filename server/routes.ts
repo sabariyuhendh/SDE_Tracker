@@ -1,93 +1,102 @@
 
-import { Hono } from "hono";
-import { zValidator } from "@hono/zod-validator";
+import { Router, type Request, type Response } from "express";
 import { storage } from "./storage";
 import { insertStudentSchema, updateStudentProgressSchema, insertWeeklyReflectionSchema } from "@shared/schema";
 import { z } from "zod";
 
-const app = new Hono();
+const router = Router();
 
 // Students routes
-app.get("/api/students", async (c) => {
+router.get("/api/students", async (req: Request, res: Response) => {
   try {
     const students = await storage.getAllStudents();
-    return c.json({ students });
+    res.json({ students });
   } catch (error) {
-    return c.json({ error: "Failed to fetch students" }, 500);
+    res.status(500).json({ error: "Failed to fetch students" });
   }
 });
 
-app.get("/api/students/:id", async (c) => {
+router.get("/api/students/:id", async (req: Request, res: Response) => {
   try {
-    const id = parseInt(c.req.param("id"));
+    const id = parseInt(req.params.id);
     const student = await storage.getStudent(id);
     
     if (!student) {
-      return c.json({ error: "Student not found" }, 404);
+      return res.status(404).json({ error: "Student not found" });
     }
     
-    return c.json({ student });
+    res.json({ student });
   } catch (error) {
-    return c.json({ error: "Failed to fetch student" }, 500);
+    res.status(500).json({ error: "Failed to fetch student" });
   }
 });
 
-app.post("/api/students", zValidator("json", insertStudentSchema), async (c) => {
+router.post("/api/students", async (req: Request, res: Response) => {
   try {
-    const studentData = c.req.valid("json");
+    const result = insertStudentSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: "Invalid student data", details: result.error.errors });
+    }
+    
+    const studentData = result.data;
     
     // Check if username already exists
     const existing = await storage.getStudentByUsername(studentData.username);
     if (existing) {
-      return c.json({ error: "Username already exists" }, 400);
+      return res.status(400).json({ error: "Username already exists" });
     }
     
     const student = await storage.createStudent(studentData);
-    return c.json({ student }, 201);
+    res.status(201).json({ student });
   } catch (error) {
-    return c.json({ error: "Failed to create student" }, 500);
+    res.status(500).json({ error: "Failed to create student" });
   }
 });
 
-app.put("/api/students/:id/progress", zValidator("json", updateStudentProgressSchema), async (c) => {
+router.put("/api/students/:id/progress", async (req: Request, res: Response) => {
   try {
-    const id = parseInt(c.req.param("id"));
-    const updates = c.req.valid("json");
+    const result = updateStudentProgressSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: "Invalid update data", details: result.error.errors });
+    }
+    
+    const id = parseInt(req.params.id);
+    const updates = result.data;
     
     const student = await storage.updateStudentProgress(id, updates);
     
     if (!student) {
-      return c.json({ error: "Student not found" }, 404);
+      return res.status(404).json({ error: "Student not found" });
     }
     
-    return c.json({ student });
+    res.json({ student });
   } catch (error) {
-    return c.json({ error: "Failed to update student progress" }, 500);
+    res.status(500).json({ error: "Failed to update student progress" });
   }
 });
 
-app.delete("/api/students/:id", async (c) => {
+router.delete("/api/students/:id", async (req: Request, res: Response) => {
   try {
-    const id = parseInt(c.req.param("id"));
+    const id = parseInt(req.params.id);
     const deleted = await storage.deleteStudent(id);
     
     if (!deleted) {
-      return c.json({ error: "Student not found" }, 404);
+      return res.status(404).json({ error: "Student not found" });
     }
     
-    return c.json({ message: "Student deleted successfully" });
+    res.json({ message: "Student deleted successfully" });
   } catch (error) {
-    return c.json({ error: "Failed to delete student" }, 500);
+    res.status(500).json({ error: "Failed to delete student" });
   }
 });
 
 // Class statistics
-app.get("/api/class/stats", async (c) => {
+router.get("/api/class/stats", async (req: Request, res: Response) => {
   try {
     const students = await storage.getAllStudents();
     
     if (students.length === 0) {
-      return c.json({
+      return res.json({
         totalStudents: 0,
         averageSolved: 0,
         totalSolved: 0,
@@ -96,14 +105,14 @@ app.get("/api/class/stats", async (c) => {
       });
     }
 
-    const totalSolved = students.reduce((sum, s) => sum + s.totalSolved, 0);
+    const totalSolved = students.reduce((sum, s) => sum + (s.totalSolved || 0), 0);
     const averageSolved = Math.round(totalSolved / students.length);
     const topPerformer = students.reduce((top, current) => 
-      current.totalSolved > top.totalSolved ? current : top
+      (current.totalSolved || 0) > (top.totalSolved || 0) ? current : top
     );
     const completionRate = Math.round((totalSolved / (students.length * 190)) * 100);
 
-    return c.json({
+    res.json({
       totalStudents: students.length,
       averageSolved,
       totalSolved,
@@ -111,76 +120,89 @@ app.get("/api/class/stats", async (c) => {
       completionRate
     });
   } catch (error) {
-    return c.json({ error: "Failed to fetch class stats" }, 500);
+    res.status(500).json({ error: "Failed to fetch class stats" });
   }
 });
 
-app.get("/api/class/leaderboard", async (c) => {
+router.get("/api/class/leaderboard", async (req: Request, res: Response) => {
   try {
     const students = await storage.getAllStudents();
     const leaderboard = students
       .map(student => ({
         ...student,
-        percentage: Math.round((student.totalSolved / 190) * 100)
+        percentage: Math.round(((student.totalSolved || 0) / 190) * 100)
       }))
-      .sort((a, b) => b.totalSolved - a.totalSolved);
+      .sort((a, b) => (b.totalSolved || 0) - (a.totalSolved || 0));
     
-    return c.json({ leaderboard });
+    res.json({ leaderboard });
   } catch (error) {
-    return c.json({ error: "Failed to fetch leaderboard" }, 500);
+    res.status(500).json({ error: "Failed to fetch leaderboard" });
   }
 });
 
 // Weekly reflections routes
-app.get("/api/reflections", async (c) => {
+router.get("/api/reflections", async (req: Request, res: Response) => {
   try {
     const reflections = await storage.getWeeklyReflections();
-    return c.json({ reflections });
+    res.json({ reflections });
   } catch (error) {
-    return c.json({ error: "Failed to fetch reflections" }, 500);
+    res.status(500).json({ error: "Failed to fetch reflections" });
   }
 });
 
-app.get("/api/reflections/:weekStart", async (c) => {
+router.get("/api/reflections/:weekStart", async (req: Request, res: Response) => {
   try {
-    const weekStart = c.req.param("weekStart");
+    const weekStart = req.params.weekStart;
     const reflection = await storage.getWeeklyReflection(weekStart);
     
     if (!reflection) {
-      return c.json({ error: "Reflection not found" }, 404);
+      return res.status(404).json({ error: "Reflection not found" });
     }
     
-    return c.json({ reflection });
+    res.json({ reflection });
   } catch (error) {
-    return c.json({ error: "Failed to fetch reflection" }, 500);
+    res.status(500).json({ error: "Failed to fetch reflection" });
   }
 });
 
-app.post("/api/reflections", zValidator("json", insertWeeklyReflectionSchema), async (c) => {
+router.post("/api/reflections", async (req: Request, res: Response) => {
   try {
-    const reflectionData = c.req.valid("json");
+    const result = insertWeeklyReflectionSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: "Invalid reflection data", details: result.error.errors });
+    }
+    
+    const reflectionData = result.data;
     const reflection = await storage.createWeeklyReflection(reflectionData);
-    return c.json({ reflection }, 201);
+    res.status(201).json({ reflection });
   } catch (error) {
-    return c.json({ error: "Failed to create reflection" }, 500);
+    res.status(500).json({ error: "Failed to create reflection" });
   }
 });
 
-app.put("/api/reflections/:weekStart", zValidator("json", insertWeeklyReflectionSchema.partial()), async (c) => {
+router.put("/api/reflections/:weekStart", async (req: Request, res: Response) => {
   try {
-    const weekStart = c.req.param("weekStart");
-    const updates = c.req.valid("json");
+    const result = insertWeeklyReflectionSchema.partial().safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: "Invalid reflection update data", details: result.error.errors });
+    }
+    
+    const weekStart = req.params.weekStart;
+    const updates = result.data;
     
     const reflection = await storage.updateWeeklyReflection(weekStart, updates);
     
     if (!reflection) {
-      return c.json({ error: "Reflection not found" }, 404);
+      return res.status(404).json({ error: "Reflection not found" });
     }
     
-    return c.json({ reflection });
+    res.json({ reflection });
   } catch (error) {
-    return c.json({ error: "Failed to update reflection" }, 500);
+    res.status(500).json({ error: "Failed to update reflection" });
   }
 });
 
-export default app;
+export function registerRoutes(app: any) {
+  app.use(router);
+  return app;
+}

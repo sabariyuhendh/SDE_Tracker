@@ -85,7 +85,7 @@ export class MemStorage implements IStorage {
   }
 
   async getAllStudents(): Promise<Student[]> {
-    return Array.from(this.students.values()).sort((a, b) => b.totalSolved - a.totalSolved);
+    return Array.from(this.students.values()).sort((a, b) => (b.totalSolved || 0) - (a.totalSolved || 0));
   }
 
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
@@ -180,7 +180,11 @@ export class MemStorage implements IStorage {
     const id = this.currentReflectionId++;
     const reflection: WeeklyReflection = {
       id,
-      ...insertReflection,
+      weekStart: insertReflection.weekStart,
+      classStats: insertReflection.classStats ?? null,
+      topicBreakdown: insertReflection.topicBreakdown ?? null,
+      highlights: Array.isArray(insertReflection.highlights) ? insertReflection.highlights : null,
+      notes: insertReflection.notes ?? null,
       createdAt: new Date(),
     };
 
@@ -194,7 +198,11 @@ export class MemStorage implements IStorage {
 
     const updated: WeeklyReflection = {
       ...existing,
-      ...updates,
+      weekStart: updates.weekStart ?? existing.weekStart,
+      classStats: updates.classStats !== undefined ? updates.classStats : existing.classStats,
+      topicBreakdown: updates.topicBreakdown !== undefined ? updates.topicBreakdown : existing.topicBreakdown,
+      highlights: Array.isArray(updates.highlights) ? updates.highlights : existing.highlights,
+      notes: updates.notes !== undefined ? updates.notes : existing.notes,
     };
 
     this.reflections.set(weekStart, updated);
