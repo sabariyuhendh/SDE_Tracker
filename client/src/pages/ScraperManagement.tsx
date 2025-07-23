@@ -8,8 +8,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Play, StopCircle, TestTube, Users, Clock, ArrowLeft, Bot } from "lucide-react";
-import { useLocation } from "wouter";
-import SimpleNavigation from "@/components/SimpleNavigation";
 import { useStudents } from "@/hooks/useHardcodedData";
 
 export default function ScraperManagement() {
@@ -19,10 +17,9 @@ export default function ScraperManagement() {
   const [isBulkScraping, setIsBulkScraping] = useState(false);
   const [isAutoScraping, setIsAutoScraping] = useState(false);
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
   const { students, isLoading: studentsLoading } = useStudents();
 
-  // Test scraping function that calls the backend API
+  // Demo test scraping function (frontend-only)
   const handleTestScrape = async () => {
     if (!testUsername.trim()) {
       toast({
@@ -35,23 +32,22 @@ export default function ScraperManagement() {
 
     setIsTestingScrape(true);
     try {
-      const response = await fetch('/api/scrape/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username: testUsername }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to test scraping');
-      }
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Demo data for testing
+      const demoData = {
+        totalSolved: Math.floor(Math.random() * 200) + 50,
+        difficultyStats: {
+          easy: Math.floor(Math.random() * 80) + 20,
+          medium: Math.floor(Math.random() * 60) + 15,
+          hard: Math.floor(Math.random() * 30) + 5,
+        }
+      };
 
       toast({
-        title: "Test Scraping Successful",
-        description: `Successfully scraped profile for ${testUsername}. Total problems: ${data.data.totalSolved}, Easy: ${data.data.difficultyStats.easy}, Medium: ${data.data.difficultyStats.medium}, Hard: ${data.data.difficultyStats.hard}`,
+        title: "Demo Test Scraping Successful",
+        description: `Demo scrape for ${testUsername}. Total problems: ${demoData.totalSolved}, Easy: ${demoData.difficultyStats.easy}, Medium: ${demoData.difficultyStats.medium}, Hard: ${demoData.difficultyStats.hard}`,
       });
       setTestUsername("");
     } catch (error: any) {

@@ -322,5 +322,15 @@ export const mockAPI = {
       difficultyStats: { easy: 0, medium: 0, hard: 0 },
       weeklyProgress: {}
     });
+  },
+
+  // Delete student
+  deleteStudent: async (id: number): Promise<boolean> => {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const students = getStoredStudents();
+    const filteredStudents = students.filter(s => s.id !== id);
+    if (filteredStudents.length === students.length) return false; // Student not found
+    setStoredStudents(filteredStudents);
+    return true;
   }
 };

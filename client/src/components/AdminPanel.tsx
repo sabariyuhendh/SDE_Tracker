@@ -14,17 +14,13 @@ import {
   RotateCcw, 
   Users,
   Plus,
-  Check,
-  X,
-  ArrowLeft
+  Trash2
 } from "lucide-react";
 import { useStudents } from "@/hooks/useHardcodedData";
-import { useLocation } from "wouter";
 
 export default function AdminPanel() {
   const { toast } = useToast();
-  const { students, isLoading, addStudent, resetStudent } = useStudents();
-  const [, setLocation] = useLocation();
+  const { students, isLoading, addStudent, resetStudent, deleteStudent } = useStudents();
   
   // States for forms
   const [newStudent, setNewStudent] = useState({ 
@@ -36,8 +32,7 @@ export default function AdminPanel() {
   const [showBulkForm, setShowBulkForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isResetting, setIsResetting] = useState<number | null>(null);
-
-  const topics = students[0] ? Object.keys(students[0].topicProgress || {}) : [];
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,20 +73,18 @@ export default function AdminPanel() {
     }
   };
 
-  const handleBulkUpload = async (e: React.FormEvent) => {
+  const handleBulkCreateStudents = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!bulkStudents.trim()) return;
+
     try {
       const studentsArray = JSON.parse(bulkStudents);
-      if (!Array.isArray(studentsArray)) {
-        toast({ title: "Invalid format - must be an array", variant: "destructive" });
-        return;
-      }
       
       for (const studentData of studentsArray) {
         const fullStudentData = {
           userId: "Volcaryx",
           username: studentData.username,
-          name: studentData.name || studentData.username,
+          name: studentData.name,
           avatar: studentData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${studentData.username}`,
           totalSolved: 0,
           weeklyProgress: {},
@@ -133,53 +126,36 @@ export default function AdminPanel() {
     }
   };
 
-  const parseCSVStudents = (csvText: string) => {
-    const lines = csvText.trim().split('\n');
-    const studentsArray = lines.map(line => {
-      const parts = line.split(',').map(p => p.trim());
-      return {
-        username: parts[0] || '',
-        name: parts[1] || parts[0] || '',
-        avatar: parts[2] || ''
-      };
-    }).filter(s => s.username);
-    
-    setBulkStudents(JSON.stringify(studentsArray, null, 2));
+  const handleDeleteStudent = async (studentId: number) => {
+    setIsDeleting(studentId);
+    try {
+      await deleteStudent(studentId);
+      toast({ title: "Student deleted successfully!" });
+    } catch (error) {
+      toast({ title: "Failed to delete student", variant: "destructive" });
+    } finally {
+      setIsDeleting(null);
+    }
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-[#F4F4F4]">Loading admin panel...</div>
+        <div className="text-white">Loading admin panel...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Navigation Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            onClick={() => setLocation("/")}
-            variant="ghost"
-            size="sm"
-            className="text-gray-300 hover:text-white hover:bg-white/10"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </div>
-        
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <Settings className="w-6 h-6 text-white" />
-            <h2 className="text-2xl font-bold text-white">Admin Panel</h2>
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <Settings className="w-6 h-6 text-white" />
+        <h2 className="text-2xl font-bold text-white">Admin Panel</h2>
+      </div>
 
       {/* Add Single Student */}
-      <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+      <Card className="bg-white/5 border-white/10 text-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5" />
@@ -190,98 +166,84 @@ export default function AdminPanel() {
           <form onSubmit={handleCreateStudent} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="username" className="text-[#E6E6FA]">Username</Label>
+                <Label htmlFor="username" className="text-gray-300">Username</Label>
                 <Input
                   id="username"
                   value={newStudent.username}
                   onChange={(e) => setNewStudent(prev => ({ ...prev, username: e.target.value }))}
                   placeholder="student_username"
-                  className="bg-white/10 border-white/20 text-[#F4F4F4] placeholder:text-[#E6E6FA]/60"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="name" className="text-[#E6E6FA]">Full Name</Label>
+                <Label htmlFor="name" className="text-gray-300">Full Name</Label>
                 <Input
                   id="name"
                   value={newStudent.name}
                   onChange={(e) => setNewStudent(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="John Doe"
-                  className="bg-white/10 border-white/20 text-[#F4F4F4] placeholder:text-[#E6E6FA]/60"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                   required
                 />
               </div>
             </div>
             <div>
-              <Label htmlFor="avatar" className="text-[#E6E6FA]">Avatar URL (Optional)</Label>
+              <Label htmlFor="avatar" className="text-gray-300">Avatar URL (Optional)</Label>
               <Input
                 id="avatar"
                 value={newStudent.avatar}
                 onChange={(e) => setNewStudent(prev => ({ ...prev, avatar: e.target.value }))}
                 placeholder="https://..."
-                className="bg-white/10 border-white/20 text-[#F4F4F4] placeholder:text-[#E6E6FA]/60"
+                className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
               />
             </div>
             <Button 
               type="submit" 
               disabled={isCreating}
-              className="bg-white text-[#516395] hover:bg-gray-100"
+              className="bg-white text-black hover:bg-gray-200"
             >
-              <Plus className="w-4 h-4 mr-2" />
               {isCreating ? "Creating..." : "Create Student"}
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* Bulk Upload Students */}
-      <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+      {/* Bulk Add Students */}
+      <Card className="bg-white/5 border-white/10 text-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5" />
-            Bulk Upload Students
+            Bulk Add Students
           </CardTitle>
         </CardHeader>
         <CardContent>
           {!showBulkForm ? (
-            <div className="space-y-4">
-              <p className="text-[#E6E6FA] text-sm">
-                Upload multiple students at once using CSV or JSON format
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setShowBulkForm(true)}
-                  variant="outline"
-                  className="border-white/20 text-[#F4F4F4] hover:bg-white/10"
-                >
-                  Upload JSON
-                </Button>
-                <Button
-                  onClick={() => {
-                    parseCSVStudents("student1,John Doe,https://example.com/avatar1.jpg\nstudent2,Jane Smith");
-                    setShowBulkForm(true);
-                  }}
-                  variant="outline"
-                  className="border-white/20 text-[#F4F4F4] hover:bg-white/10"
-                >
-                  CSV Example
-                </Button>
-              </div>
-            </div>
+            <Button 
+              onClick={() => setShowBulkForm(true)}
+              variant="outline" 
+              className="border-white/20 text-white bg-transparent hover:bg-white/10"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Upload Multiple Students
+            </Button>
           ) : (
-            <form onSubmit={handleBulkUpload} className="space-y-4">
+            <form onSubmit={handleBulkCreateStudents} className="space-y-4">
               <div>
-                <Label className="text-[#E6E6FA]">Student Data (JSON Array)</Label>
+                <Label htmlFor="bulkStudents" className="text-gray-300">
+                  Student Data (JSON format)
+                </Label>
                 <Textarea
+                  id="bulkStudents"
                   value={bulkStudents}
                   onChange={(e) => setBulkStudents(e.target.value)}
                   placeholder='[{"username": "student1", "name": "John Doe", "avatar": "https://..."}, ...]'
                   rows={8}
-                  className="bg-white/10 border-white/20 text-[#F4F4F4] placeholder:text-[#E6E6FA]/60"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" className="bg-white text-[#516395] hover:bg-gray-100">
+                <Button type="submit" className="bg-white text-black hover:bg-gray-200">
                   <Upload className="w-4 h-4 mr-2" />
                   Upload Students
                 </Button>
@@ -289,7 +251,7 @@ export default function AdminPanel() {
                   type="button" 
                   onClick={() => setShowBulkForm(false)}
                   variant="outline"
-                  className="border-white/20 text-[#F4F4F4] hover:bg-white/10"
+                  className="border-white/20 text-white bg-transparent hover:bg-white/10"
                 >
                   Cancel
                 </Button>
@@ -300,7 +262,7 @@ export default function AdminPanel() {
       </Card>
 
       {/* Current Students */}
-      <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+      <Card className="bg-white/5 border-white/10 text-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
@@ -317,40 +279,50 @@ export default function AdminPanel() {
                 <div className="flex items-center gap-4">
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={student.avatar || undefined} />
-                    <AvatarFallback className="bg-white/20 text-[#F4F4F4]">
+                    <AvatarFallback className="bg-white/20 text-white">
                       {student.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h4 className="font-medium text-[#F4F4F4]">{student.name}</h4>
-                    <p className="text-sm text-[#E6E6FA]">@{student.username}</p>
+                    <h4 className="font-medium text-white">{student.name}</h4>
+                    <p className="text-sm text-gray-300">@{student.username}</p>
                   </div>
-                  <Badge variant="secondary" className="bg-white/20 text-[#F4F4F4]">
+                  <Badge variant="secondary" className="bg-white/20 text-white">
                     {student.totalSolved || 0} solved
                   </Badge>
                 </div>
-                <Button
-                  onClick={() => handleResetStudent(student.id)}
-                  disabled={isResetting === student.id}
-                  variant="outline"
-                  size="sm"
-                  className="border-white/20 text-[#F4F4F4] hover:bg-white/10"
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  {isResetting === student.id ? "Resetting..." : "Reset"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleResetStudent(student.id)}
+                    disabled={isResetting === student.id}
+                    variant="outline"
+                    size="sm"
+                    className="border-white/20 text-white bg-transparent hover:bg-white/10"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    {isResetting === student.id ? "Resetting..." : "Reset"}
+                  </Button>
+                  <Button
+                    onClick={() => handleDeleteStudent(student.id)}
+                    disabled={isDeleting === student.id}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-500/20 text-red-400 bg-transparent hover:bg-red-500/10"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {isDeleting === student.id ? "Deleting..." : "Delete"}
+                  </Button>
+                </div>
               </div>
             ))}
             {students.length === 0 && (
-              <p className="text-center text-[#E6E6FA] py-8">
+              <p className="text-center text-gray-300 py-8">
                 No students found. Add some students to get started!
               </p>
             )}
           </div>
         </CardContent>
       </Card>
-        </div>
-      </div>
     </div>
   );
 }

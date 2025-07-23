@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ClassDashboard } from '@/components/ClassDashboard';
 import { StudentManager } from '@/components/StudentManager';
 import { ClassWeekendReview } from '@/components/ClassWeekendReview';
-import SimpleNavigation from '@/components/SimpleNavigation';
+import LeaderboardPage from '@/components/LeaderboardPage';
+import ScraperManagement from '@/pages/ScraperManagement';
 import AdminPanel from '@/components/AdminPanel';
 
-type TabType = 'dashboard' | 'students' | 'review' | 'admin';
+type TabType = 'dashboard' | 'students' | 'review' | 'admin' | 'leaderboard' | 'scraper';
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -33,6 +34,10 @@ const Index = () => {
         return <ClassWeekendReview key="review" />;
       case 'admin':
         return <AdminPanel key="admin" />;
+      case 'leaderboard':
+        return <LeaderboardPage key="leaderboard" />;
+      case 'scraper':
+        return <ScraperManagement key="scraper" />;
       default:
         return <ClassDashboard key="dashboard" />;
     }
@@ -40,31 +45,47 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <SimpleNavigation />
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* Tab Navigation */}
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-          <div className="flex space-x-1 bg-white/10 rounded-lg p-1">
-            {[
-              { id: 'dashboard', label: 'Dashboard' },
-              { id: 'students', label: 'Students' },
-              { id: 'review', label: 'Review' },
-              { id: 'admin', label: 'Admin' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
-                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? 'bg-white text-[#516395] shadow-sm'
-                    : 'text-[#E6E6FA] hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+      {/* Navigation Header */}
+      <nav className="bg-black/40 backdrop-blur-sm border-b border-white/10 sticky top-0 z-50">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-8">
+              <div className="text-xl font-bold text-white cursor-pointer">
+                TUF Class Tracker
+              </div>
+              <div className="flex space-x-1">
+                {[
+                  { id: 'dashboard', label: 'Dashboard' },
+                  { id: 'leaderboard', label: 'Leaderboard' },
+                  { id: 'scraper', label: 'Scraper' },
+                  { id: 'admin', label: 'Admin' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as TabType)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      activeTab === tab.id
+                        ? 'bg-white/20 text-white shadow-sm'
+                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* User info section */}
+            <div className="flex items-center space-x-4 text-gray-300">
+              <div className="flex items-center space-x-2 bg-white/10 px-3 py-1 rounded-lg">
+                <span className="text-sm font-medium">Volcaryx</span>
+              </div>
+            </div>
           </div>
         </div>
+      </nav>
+
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
         {/* Main Content */}
           <AnimatePresence mode="wait">

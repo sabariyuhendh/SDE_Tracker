@@ -74,6 +74,19 @@ export function useStudents() {
     }
   };
 
+  const deleteStudent = async (id: number) => {
+    try {
+      const success = await mockAPI.deleteStudent(id);
+      if (success) {
+        setStudents(prev => prev.filter(s => s.id !== id));
+      }
+      return success;
+    } catch (error) {
+      console.error('Failed to delete student:', error);
+      throw error;
+    }
+  };
+
   return {
     students,
     isLoading,
@@ -81,6 +94,7 @@ export function useStudents() {
     updateStudent,
     markProblemsAsSolved,
     resetStudent,
+    deleteStudent,
     refetch: () => {
       const data = getStoredStudents();
       setStudents(data);
