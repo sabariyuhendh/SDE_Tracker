@@ -6,6 +6,8 @@ import { ClassWeekendReview } from '@/components/ClassWeekendReview';
 import LeaderboardPage from '@/components/LeaderboardPage';
 import ScraperManagement from '@/pages/ScraperManagement';
 import AdminPanel from '@/components/AdminPanel';
+import WeekendReviewPage from '@/pages/WeekendReviewPage';
+import { Calendar, BarChart3, Bot, Users, Trophy } from 'lucide-react';
 
 type TabType = 'dashboard' | 'students' | 'review' | 'admin' | 'leaderboard' | 'scraper';
 
@@ -31,7 +33,7 @@ const Index = () => {
       case 'students':
         return <StudentManager key="students" />;
       case 'review':
-        return <ClassWeekendReview key="review" />;
+        return <WeekendReviewPage key="review" />;
       case 'admin':
         return <AdminPanel key="admin" />;
       case 'leaderboard':
@@ -55,23 +57,28 @@ const Index = () => {
               </div>
               <div className="flex space-x-1">
                 {[
-                  { id: 'dashboard', label: 'Dashboard' },
-                  { id: 'leaderboard', label: 'Leaderboard' },
-                  { id: 'scraper', label: 'Scraper' },
-                  { id: 'admin', label: 'Admin' }
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as TabType)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      activeTab === tab.id
-                        ? 'bg-white/20 text-white shadow-sm'
-                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
+                  { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+                  { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+                  { id: 'review', label: 'Weekend Review', icon: Calendar },
+                  { id: 'scraper', label: 'Scraper', icon: Bot },
+                  { id: 'admin', label: 'Admin', icon: Users }
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as TabType)}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        activeTab === tab.id
+                          ? 'bg-white/20 text-white shadow-sm'
+                          : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {Icon && <Icon className="w-4 h-4" />}
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             
