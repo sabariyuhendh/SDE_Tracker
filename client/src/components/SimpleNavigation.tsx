@@ -13,13 +13,13 @@ export default function SimpleNavigation() {
   const [location] = useLocation();
 
   return (
-    <nav className="bg-[#516395]/20 backdrop-blur-sm border-b border-white/20 sticky top-0 z-50">
+    <nav className="bg-black/40 backdrop-blur-sm border-b border-white/10 sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
             <Link 
               href="/"
-              className="text-xl font-bold text-[#F4F4F4] cursor-pointer hover:text-white transition-colors"
+              className="text-xl font-bold text-white cursor-pointer hover:text-gray-300 transition-colors"
             >
               TUF Class Tracker
             </Link>
@@ -37,8 +37,8 @@ export default function SimpleNavigation() {
                     className={cn(
                       "flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                       isActive
-                        ? "bg-white/20 text-[#F4F4F4] shadow-sm"
-                        : "text-[#E6E6FA] hover:bg-white/10 hover:text-[#F4F4F4]"
+                        ? "bg-white/20 text-white shadow-sm"
+                        : "text-gray-300 hover:bg-white/10 hover:text-white"
                     )}
                   >
                     <Icon className="w-4 h-4" />
@@ -50,7 +50,7 @@ export default function SimpleNavigation() {
           </div>
           
           {/* User info section */}
-          <div className="flex items-center space-x-4 text-[#E6E6FA]">
+          <div className="flex items-center space-x-4 text-gray-300">
             <div className="flex items-center space-x-2 bg-white/10 px-3 py-1 rounded-lg">
               <User className="w-4 h-4" />
               <span className="text-sm font-medium">Volcaryx</span>

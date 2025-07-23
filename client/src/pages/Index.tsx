@@ -22,33 +22,6 @@ const pageTransition = {
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-  const [isDarkMode, setIsDarkMode] = useState(true);
-
-  // Theme management
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('tuf-theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme) {
-      setIsDarkMode(savedTheme === 'dark');
-    } else {
-      setIsDarkMode(prefersDark);
-    }
-  }, []);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (isDarkMode) {
-      root.classList.remove('light');
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-      root.classList.add('light');
-    }
-    localStorage.setItem('tuf-theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
-
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -66,11 +39,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#2E4057] via-[#516395] to-[#7209B7]">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <SimpleNavigation />
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Tab Navigation */}
-        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6">
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
           <div className="flex space-x-1 bg-white/10 rounded-lg p-1">
             {[
               { id: 'dashboard', label: 'Dashboard' },

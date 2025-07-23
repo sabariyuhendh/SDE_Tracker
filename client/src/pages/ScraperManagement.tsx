@@ -190,44 +190,55 @@ export default function ScraperManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-4">
-      <SimpleNavigation />
-      
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
       <div className="max-w-6xl mx-auto space-y-6">
+        {/* Navigation Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            onClick={() => setLocation("/")}
+            variant="ghost"
+            size="sm"
+            className="text-gray-300 hover:text-white hover:bg-white/10"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
+        
         <div className="text-center">
           <h1 className="text-4xl font-bold text-white mb-2">TUF Scraper Management</h1>
-          <p className="text-[#E6E6FA] text-lg">
-            Manage TakeUForward profile scraping and data synchronization
+          <p className="text-gray-300 text-lg">
+            Manage TakeUForward profile scraping and data synchronization (Demo Mode)
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Test Scraping */}
-          <Card className="bg-white/10 border-white/20 text-[#F4F4F4]">
+          <Card className="bg-white/5 border-white/10 text-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TestTube className="w-5 h-5" />
-                Test Scraping
+                Test Scraping (Demo)
               </CardTitle>
-              <CardDescription className="text-[#E6E6FA]">
-                Test the scraper with any TUF username to verify functionality
+              <CardDescription className="text-gray-300">
+                Demo interface for testing TUF username scraping functionality
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="testUsername" className="text-[#E6E6FA]">TUF Username</Label>
+                <Label htmlFor="testUsername" className="text-gray-300">TUF Username</Label>
                 <Input
                   id="testUsername"
                   value={testUsername}
                   onChange={(e) => setTestUsername(e.target.value)}
                   placeholder="Enter TUF username (e.g., striver_79)"
-                  className="bg-white/10 border-white/20 text-[#F4F4F4] placeholder:text-[#E6E6FA]/60"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                 />
               </div>
               <Button
                 onClick={handleTestScrape}
                 disabled={isTestingScrape || !testUsername.trim()}
-                className="w-full bg-white text-[#516395] hover:bg-gray-100"
+                className="w-full bg-white text-black hover:bg-gray-200"
               >
                 {isTestingScrape ? (
                   <>
@@ -287,14 +298,14 @@ export default function ScraperManagement() {
         </div>
 
         {/* Bulk Operations */}
-        <Card className="bg-white/10 border-white/20 text-[#F4F4F4]">
+        <Card className="bg-white/5 border-white/10 text-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Bulk Operations
+              Bulk Operations (Demo)
             </CardTitle>
-            <CardDescription className="text-[#E6E6FA]">
-              Scrape data for all students or manage individual student profiles
+            <CardDescription className="text-gray-300">
+              Demo interface for bulk student scraping operations
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

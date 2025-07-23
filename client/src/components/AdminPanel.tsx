@@ -15,13 +15,16 @@ import {
   Users,
   Plus,
   Check,
-  X
+  X,
+  ArrowLeft
 } from "lucide-react";
 import { useStudents } from "@/hooks/useHardcodedData";
+import { useLocation } from "wouter";
 
 export default function AdminPanel() {
   const { toast } = useToast();
   const { students, isLoading, addStudent, resetStudent } = useStudents();
+  const [, setLocation] = useLocation();
   
   // States for forms
   const [newStudent, setNewStudent] = useState({ 
@@ -153,12 +156,27 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Settings className="w-6 h-6 text-[#F4F4F4]" />
-        <h2 className="text-2xl font-bold text-[#F4F4F4]">Admin Panel</h2>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Navigation Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            onClick={() => setLocation("/")}
+            variant="ghost"
+            size="sm"
+            className="text-gray-300 hover:text-white hover:bg-white/10"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
+        
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-6">
+            <Settings className="w-6 h-6 text-white" />
+            <h2 className="text-2xl font-bold text-white">Admin Panel</h2>
+          </div>
 
       {/* Add Single Student */}
       <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
@@ -331,6 +349,8 @@ export default function AdminPanel() {
           </div>
         </CardContent>
       </Card>
+        </div>
+      </div>
     </div>
   );
 }

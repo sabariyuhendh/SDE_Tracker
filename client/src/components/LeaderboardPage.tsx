@@ -90,20 +90,18 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#2E4057] via-[#516395] to-[#7209B7]">
-      <SimpleNavigation />
-      
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Trophy className="w-6 h-6 text-[#F4F4F4]" />
-            <h1 className="text-2xl font-bold text-[#F4F4F4]">Class Leaderboard</h1>
+            <Trophy className="w-6 h-6 text-white" />
+            <h1 className="text-2xl font-bold text-white">Class Leaderboard</h1>
           </div>
           <Button
             onClick={() => setLocation("/")}
             variant="outline"
-            className="border-white/20 text-[#F4F4F4] hover:bg-white/10"
+            className="border-white/20 text-white hover:bg-white/10"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
@@ -112,19 +110,19 @@ export default function LeaderboardPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-white/10 border-white/20 text-[#F4F4F4]">
+          <Card className="bg-white/5 border-white/10 text-white">
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <Users className="w-8 h-8 text-blue-400" />
                 <div>
                   <p className="text-2xl font-bold">{students.length}</p>
-                  <p className="text-sm text-[#E6E6FA]">Total Students</p>
+                  <p className="text-sm text-gray-300">Total Students</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/10 border-white/20 text-[#F4F4F4]">
+          <Card className="bg-white/5 border-white/10 text-white">
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <TrendingUp className="w-8 h-8 text-green-400" />
@@ -132,13 +130,13 @@ export default function LeaderboardPage() {
                   <p className="text-2xl font-bold">
                     {Math.round(leaderboardData.reduce((sum, s) => sum + (s.totalSolved || 0), 0) / (leaderboardData.length || 1))}
                   </p>
-                  <p className="text-sm text-[#E6E6FA]">Average Problems</p>
+                  <p className="text-sm text-gray-300">Average Problems</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/10 border-white/20 text-[#F4F4F4]">
+          <Card className="bg-white/5 border-white/10 text-white">
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <Trophy className="w-8 h-8 text-yellow-400" />
@@ -146,7 +144,7 @@ export default function LeaderboardPage() {
                   <p className="text-2xl font-bold">
                     {leaderboardData[0]?.totalSolved || 0}
                   </p>
-                  <p className="text-sm text-[#E6E6FA]">Top Score</p>
+                  <p className="text-sm text-gray-300">Top Score</p>
                 </div>
               </div>
             </CardContent>
