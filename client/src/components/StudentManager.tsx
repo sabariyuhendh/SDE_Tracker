@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, User, Edit3, Trash2, Save, X } from 'lucide-react';
+import { Plus, User, BarChart3, Calendar, X, Save } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,17 +21,14 @@ export const StudentManager = () => {
     selectedStudent, 
     setSelectedStudent, 
     addStudent, 
-    updateTopicProgress,
     updateStudentProgress,
-    removeStudent,
     getCurrentStudent 
   } = useClassProgress();
   
   const { toast } = useToast();
   const [showAddForm, setShowAddForm] = useState(false);
   const [newStudentData, setNewStudentData] = useState({ userId: 'Volcaryx', username: '', name: '' });
-  const [editingTopic, setEditingTopic] = useState<string | null>(null);
-  const [tempValues, setTempValues] = useState<{ [key: string]: number }>({});
+
 
   const currentStudent = getCurrentStudent();
 
@@ -65,21 +62,7 @@ export const StudentManager = () => {
     });
   };
 
-  const handleTopicUpdate = (topic: Topic, solved: number) => {
-    if (!currentStudent) return;
-    
-    const topicData = currentStudent.topicProgress[topic];
-    const total = topicData?.total || 0;
-    
-    updateTopicProgress(currentStudent.id, topic, solved, total);
-    setEditingTopic(null);
-    setTempValues({});
-    
-    toast({
-      title: "Progress Updated",
-      description: `${topic} progress updated for ${currentStudent.name}`,
-    });
-  };
+
 
   const handleReflectionUpdate = (reflection: string) => {
     if (!currentStudent) return;
@@ -232,7 +215,7 @@ export const StudentManager = () => {
         <>
           {/* Student Overview */}
           <motion.div variants={itemVariants}>
-            <Card className="glass-card">
+            <Card className="bg-card border border-border">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -242,7 +225,7 @@ export const StudentManager = () => {
                       className="w-16 h-16 rounded-full border-2 border-primary/20"
                     />
                     <div>
-                      <CardTitle className="text-2xl">{currentStudent.name}</CardTitle>
+                      <CardTitle className="text-2xl font-light">{currentStudent.name}</CardTitle>
                       <p className="text-muted-foreground">@{currentStudent.username}</p>
                       <p className="text-sm text-muted-foreground">
                         Last updated: {new Date(currentStudent.lastUpdated).toLocaleDateString()}
@@ -291,90 +274,44 @@ export const StudentManager = () => {
             </Card>
           </motion.div>
 
-          {/* Topic Progress Management */}
+          {/* Topic Progress Display - View Only */}
           <motion.div variants={itemVariants}>
-            <Card className="glass-card">
+            <Card className="bg-card border border-border">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Edit3 className="w-5 h-5 text-accent" />
-                  <span>Topic Progress</span>
+                  <BarChart3 className="w-5 h-5 text-foreground" />
+                  <span className="font-light">Topic Progress Overview</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {TOPICS.map(topic => {
                     const progress = currentStudent.topicProgress[topic];
-                    const isEditing = editingTopic === topic;
                     
                     return (
                       <motion.div
                         key={topic}
-                        className="p-4 rounded-xl bg-card/50 space-y-3"
+                        className="p-4 rounded-xl bg-secondary border border-border space-y-3"
                         whileHover={{ scale: 1.02 }}
                         transition={{ duration: 0.2 }}
                       >
                         <div className="flex items-center justify-between">
-                          <h5 className="font-medium">{topic}</h5>
-                          {!isEditing ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditingTopic(topic);
-                                setTempValues({ [topic]: progress?.solved || 0 });
-                              }}
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </Button>
-                          ) : (
-                            <div className="flex space-x-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleTopicUpdate(topic, tempValues[topic] || 0)}
-                              >
-                                <Save className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setEditingTopic(null);
-                                  setTempValues({});
-                                }}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          )}
+                          <h5 className="font-light">{topic}</h5>
+                          <Badge variant="outline" className="font-light">
+                            {progress?.solved || 0}/{progress?.total || 0}
+                          </Badge>
                         </div>
                         
-                        {isEditing ? (
-                          <div className="space-y-2">
-                            <Label>Problems Solved</Label>
-                            <Input
-                              type="number"
-                              min="0"
-                              max={progress?.total || 0}
-                              value={tempValues[topic] || 0}
-                              onChange={(e) => setTempValues(prev => ({
-                                ...prev,
-                                [topic]: parseInt(e.target.value) || 0
-                              }))}
-                            />
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm font-light">
+                            <span>{progress?.solved || 0} solved</span>
+                            <span>{progress?.percentage || 0}%</span>
                           </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span>{progress?.solved || 0} solved</span>
-                              <span>{progress?.percentage || 0}%</span>
-                            </div>
-                            <Progress value={progress?.percentage || 0} className="h-2" />
-                            <div className="text-xs text-muted-foreground">
-                              out of {progress?.total || 0} problems
-                            </div>
+                          <Progress value={progress?.percentage || 0} className="h-2" />
+                          <div className="text-xs text-muted-foreground font-light">
+                            out of {progress?.total || 0} problems
                           </div>
-                        )}
+                        </div>
                       </motion.div>
                     );
                   })}
@@ -385,9 +322,9 @@ export const StudentManager = () => {
 
           {/* Student Reflection */}
           <motion.div variants={itemVariants}>
-            <Card className="glass-card">
+            <Card className="bg-card border border-border">
               <CardHeader>
-                <CardTitle>Personal Reflection</CardTitle>
+                <CardTitle className="font-light">Personal Reflection</CardTitle>
               </CardHeader>
               <CardContent>
                 <Textarea

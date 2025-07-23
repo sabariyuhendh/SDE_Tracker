@@ -127,53 +127,53 @@ export default function ScraperManagement() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Home
             </Button>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-light text-foreground">
               TUF Scraper Management
             </h1>
           </div>
-          <Badge variant="secondary" className="bg-white/10 text-white border-white/20">
+          <Badge variant="secondary" className="bg-secondary text-secondary-foreground border-border font-light">
             <Clock className="w-4 h-4 mr-1" />
             Auto-scraping: Daily at 2 AM UTC
           </Badge>
         </div>
 
-        <Alert className="bg-white/5 border-white/20 text-white">
-          <AlertDescription className="text-gray-300">
-            <strong className="text-white">Important:</strong> TUF scraping uses Puppeteer to extract data from student profiles. 
+        <Alert className="bg-secondary border-border text-foreground">
+          <AlertDescription className="text-muted-foreground font-light">
+            <strong className="text-foreground font-normal">Important:</strong> TUF scraping uses Puppeteer to extract data from student profiles. 
             This process may be slow and should be run server-side. The scraper will attempt to extract 
             total problems solved, difficulty breakdown, and topic progress.
           </AlertDescription>
         </Alert>
 
         {/* Test Scraping Section */}
-        <Card className="bg-white/5 backdrop-blur-lg border-white/20">
+        <Card className="bg-card border border-border">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white text-xl font-semibold">
+            <CardTitle className="flex items-center gap-2 text-foreground text-xl font-light">
               <TestTube className="w-5 h-5" />
               Test Profile Scraping
             </CardTitle>
-            <CardDescription className="text-gray-300">
+            <CardDescription className="text-muted-foreground font-light">
               Test the scraper with any TUF username to see what data can be extracted
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-4">
               <div className="flex-1">
-                <Label htmlFor="test-username" className="text-white font-medium">TUF Username</Label>
+                <Label htmlFor="test-username" className="text-foreground font-light">TUF Username</Label>
                 <Input
                   id="test-username"
                   value={testUsername}
                   onChange={(e) => setTestUsername(e.target.value)}
                   placeholder="Enter TUF username (e.g., your_tuf_username)"
                   disabled={testScrapeMutation.isPending}
-                  className="bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-white/40"
+                  className="bg-input border-border text-foreground placeholder-muted-foreground focus:border-ring"
                 />
               </div>
               <div className="flex items-end">
                 <Button
                   onClick={handleTestScrape}
                   disabled={testScrapeMutation.isPending}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium flex items-center gap-2"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-light flex items-center gap-2"
                 >
                   {testScrapeMutation.isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

@@ -132,26 +132,26 @@ export default function LeaderboardPage() {
         {sortedStudents.length >= 3 && (
           <div className="grid grid-cols-3 gap-6 mb-8">
             {/* 2nd Place */}
-            <Card className="bg-white/5 backdrop-blur-lg border-white/20 mt-8">
+            <Card className="bg-secondary border border-border mt-8">
               <CardHeader className="text-center pb-4">
-                <Trophy className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <Trophy className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                 <Avatar className="w-16 h-16 mx-auto mb-4">
                   <AvatarImage src={sortedStudents[1].avatar} alt={sortedStudents[1].name} />
-                  <AvatarFallback className="bg-white/20 text-white">
+                  <AvatarFallback className="bg-secondary text-foreground font-light">
                     {sortedStudents[1].name.split(" ").map(n => n[0]).join("")}
                   </AvatarFallback>
                 </Avatar>
-                <h3 className="font-bold text-white">{sortedStudents[1].name}</h3>
-                <p className="text-gray-300 text-sm">@{sortedStudents[1].username}</p>
+                <h3 className="font-light text-foreground">{sortedStudents[1].name}</h3>
+                <p className="text-muted-foreground text-sm font-light">@{sortedStudents[1].username}</p>
               </CardHeader>
               <CardContent className="text-center">
-                <div className="text-2xl font-bold mb-2 text-white">{sortedStudents[1].totalSolved}</div>
-                <div className="text-gray-300 text-sm">{sortedStudents[1].percentage}% complete</div>
+                <div className="text-2xl font-light mb-2 text-foreground">{sortedStudents[1].totalSolved}</div>
+                <div className="text-muted-foreground text-sm font-light">{sortedStudents[1].percentage}% complete</div>
               </CardContent>
             </Card>
 
             {/* 1st Place */}
-            <Card className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 backdrop-blur-lg border-yellow-500/50">
+            <Card className="bg-primary/10 border border-primary">
               <CardHeader className="text-center pb-4">
                 <Trophy className="w-10 h-10 text-yellow-500 mx-auto mb-2" />
                 <Avatar className="w-20 h-20 mx-auto mb-4">
@@ -174,7 +174,7 @@ export default function LeaderboardPage() {
             </Card>
 
             {/* 3rd Place */}
-            <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover mt-8">
+            <Card className="bg-secondary border border-border text-foreground mt-8">
               <CardHeader className="text-center pb-4">
                 <Trophy className="w-8 h-8 text-amber-600 mx-auto mb-2" />
                 <Avatar className="w-16 h-16 mx-auto mb-4">
