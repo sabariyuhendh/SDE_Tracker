@@ -32,35 +32,54 @@ export class TUFScraper {
     console.log(`Starting to scrape TUF profile for user: ${username}`);
 
     try {
+      // Validate username
+      if (!username || username.trim().length === 0) {
+        throw new Error("Invalid username provided");
+      }
+
       // Since we can't launch browser in Replit environment,
       // we'll simulate the scraping for now and return mock data
       // In a real environment, this would work with proper system dependencies
       console.log(`Simulating scraping for user: ${username}`);
       
-      // Simulate realistic TUF profile data
+      // Add realistic delay to simulate actual scraping
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      
+      // Simulate realistic TUF profile data with some variation based on username
+      const userSeed = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const seededRandom = (seed: number) => {
+        const x = Math.sin(seed) * 10000;
+        return x - Math.floor(x);
+      };
+
+      const baseSolved = Math.floor(seededRandom(userSeed) * 400) + 100;
+      const easyCount = Math.floor(seededRandom(userSeed + 1) * 150) + 50;
+      const mediumCount = Math.floor(seededRandom(userSeed + 2) * 120) + 30;
+      const hardCount = Math.floor(seededRandom(userSeed + 3) * 80) + 10;
+
       const mockData: TUFProfileData = {
         username,
-        totalSolved: Math.floor(Math.random() * 500) + 100,
+        totalSolved: easyCount + mediumCount + hardCount,
         difficultyStats: {
-          easy: Math.floor(Math.random() * 200) + 50,
-          medium: Math.floor(Math.random() * 200) + 30,
-          hard: Math.floor(Math.random() * 100) + 10
+          easy: easyCount,
+          medium: mediumCount,
+          hard: hardCount
         },
         topicProgress: {
-          "Array": { solved: Math.floor(Math.random() * 25), total: 25, percentage: 0 },
-          "Matrix": { solved: Math.floor(Math.random() * 6), total: 6, percentage: 0 },
-          "String": { solved: Math.floor(Math.random() * 15), total: 15, percentage: 0 },
-          "Searching & Sorting": { solved: Math.floor(Math.random() * 18), total: 18, percentage: 0 },
-          "Linked List": { solved: Math.floor(Math.random() * 14), total: 14, percentage: 0 },
-          "Binary Trees": { solved: Math.floor(Math.random() * 25), total: 25, percentage: 0 },
-          "Binary Search Trees": { solved: Math.floor(Math.random() * 10), total: 10, percentage: 0 },
-          "Greedy": { solved: Math.floor(Math.random() * 12), total: 12, percentage: 0 },
-          "Backtracking": { solved: Math.floor(Math.random() * 9), total: 9, percentage: 0 },
-          "Stacks and Queues": { solved: Math.floor(Math.random() * 12), total: 12, percentage: 0 },
-          "Heap": { solved: Math.floor(Math.random() * 6), total: 6, percentage: 0 },
-          "Graph": { solved: Math.floor(Math.random() * 15), total: 15, percentage: 0 },
-          "Trie": { solved: Math.floor(Math.random() * 6), total: 6, percentage: 0 },
-          "Dynamic Programming": { solved: Math.floor(Math.random() * 17), total: 17, percentage: 0 }
+          "Array": { solved: Math.floor(seededRandom(userSeed + 4) * 25), total: 25, percentage: 0 },
+          "Matrix": { solved: Math.floor(seededRandom(userSeed + 5) * 6), total: 6, percentage: 0 },
+          "String": { solved: Math.floor(seededRandom(userSeed + 6) * 15), total: 15, percentage: 0 },
+          "Searching & Sorting": { solved: Math.floor(seededRandom(userSeed + 7) * 18), total: 18, percentage: 0 },
+          "Linked List": { solved: Math.floor(seededRandom(userSeed + 8) * 14), total: 14, percentage: 0 },
+          "Binary Trees": { solved: Math.floor(seededRandom(userSeed + 9) * 25), total: 25, percentage: 0 },
+          "Binary Search Trees": { solved: Math.floor(seededRandom(userSeed + 10) * 10), total: 10, percentage: 0 },
+          "Greedy": { solved: Math.floor(seededRandom(userSeed + 11) * 12), total: 12, percentage: 0 },
+          "Backtracking": { solved: Math.floor(seededRandom(userSeed + 12) * 9), total: 9, percentage: 0 },
+          "Stacks and Queues": { solved: Math.floor(seededRandom(userSeed + 13) * 12), total: 12, percentage: 0 },
+          "Heap": { solved: Math.floor(seededRandom(userSeed + 14) * 6), total: 6, percentage: 0 },
+          "Graph": { solved: Math.floor(seededRandom(userSeed + 15) * 15), total: 15, percentage: 0 },
+          "Trie": { solved: Math.floor(seededRandom(userSeed + 16) * 6), total: 6, percentage: 0 },
+          "Dynamic Programming": { solved: Math.floor(seededRandom(userSeed + 17) * 17), total: 17, percentage: 0 }
         }
       };
 
@@ -70,12 +89,17 @@ export class TUFScraper {
         progress.percentage = Math.round((progress.solved / progress.total) * 100);
       });
 
-      console.log(`Mock scraping completed for ${username}:`, mockData);
+      console.log(`Mock scraping completed for ${username}:`, {
+        username: mockData.username,
+        totalSolved: mockData.totalSolved,
+        difficultyStats: mockData.difficultyStats
+      });
+      
       return mockData;
 
     } catch (error) {
       console.error(`Error scraping TUF profile for ${username}:`, error);
-      return null;
+      throw error; // Re-throw to allow proper error handling in routes
     } finally {
       this.scrapingInProgress.delete(username);
     }

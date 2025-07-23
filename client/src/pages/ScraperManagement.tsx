@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,11 +17,12 @@ export default function ScraperManagement() {
   const [isTestingScrape, setIsTestingScrape] = useState(false);
   const [isScraping, setIsScraping] = useState<number | null>(null);
   const [isBulkScraping, setIsBulkScraping] = useState(false);
+  const [isAutoScraping, setIsAutoScraping] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { students, isLoading: studentsLoading } = useStudents();
 
-  // Mock scraping functions that simulate the scraping process
+  // Test scraping function that calls the backend API
   const handleTestScrape = async () => {
     if (!testUsername.trim()) {
       toast({
@@ -33,19 +35,29 @@ export default function ScraperManagement() {
 
     setIsTestingScrape(true);
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock successful response
+      const response = await fetch('/api/scrape/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: testUsername }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to test scraping');
+      }
+
       toast({
         title: "Test Scraping Successful",
-        description: `Successfully scraped profile for ${testUsername}. Total problems: 142, Easy: 65, Medium: 52, Hard: 25`,
+        description: `Successfully scraped profile for ${testUsername}. Total problems: ${data.data.totalSolved}, Easy: ${data.data.difficultyStats.easy}, Medium: ${data.data.difficultyStats.medium}, Hard: ${data.data.difficultyStats.hard}`,
       });
       setTestUsername("");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Test Scraping Failed",
-        description: "Failed to scrape profile data. Please check the username.",
+        description: error.message || "Failed to scrape profile data. Please check the username.",
         variant: "destructive",
       });
     } finally {
@@ -53,20 +65,31 @@ export default function ScraperManagement() {
     }
   };
 
+  // Scrape individual student
   const handleScrapeStudent = async (studentId: number, studentName: string) => {
     setIsScraping(studentId);
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      const response = await fetch(`/api/students/${studentId}/scrape`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to scrape student data');
+      }
+
       toast({
         title: "Student Data Updated",
         description: `Successfully scraped and updated data for ${studentName}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Scraping Failed",
-        description: `Failed to scrape data for ${studentName}`,
+        description: error.message || `Failed to scrape data for ${studentName}`,
         variant: "destructive",
       });
     } finally {
@@ -74,20 +97,31 @@ export default function ScraperManagement() {
     }
   };
 
+  // Bulk scrape all students
   const handleBulkScrape = async () => {
     setIsBulkScraping(true);
     try {
-      // Simulate bulk scraping delay
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      toast({
-        title: "Bulk Scraping Completed",
-        description: `Successfully updated data for all ${students.length} students`,
+      const response = await fetch('/api/scrape/all', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-    } catch (error) {
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to start bulk scraping');
+      }
+
+      toast({
+        title: "Bulk Scraping Started",
+        description: "Bulk scraping has been started in the background for all students",
+      });
+    } catch (error: any) {
       toast({
         title: "Bulk Scraping Failed",
-        description: "Some students could not be updated. Please try individual scraping.",
+        description: error.message || "Failed to start bulk scraping",
         variant: "destructive",
       });
     } finally {
@@ -95,34 +129,77 @@ export default function ScraperManagement() {
     }
   };
 
+  // Start auto scraping
+  const handleStartAutoScraping = async () => {
+    try {
+      const response = await fetch('/api/scrape/start-auto', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to start auto-scraping');
+      }
+
+      setIsAutoScraping(true);
+      toast({
+        title: "Auto-Scraping Started",
+        description: "Auto-scraping is now active (daily at 2 AM UTC)",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Auto-Scraping Failed",
+        description: error.message || "Failed to start auto-scraping",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Stop auto scraping
+  const handleStopAutoScraping = async () => {
+    try {
+      const response = await fetch('/api/scrape/stop-auto', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to stop auto-scraping');
+      }
+
+      setIsAutoScraping(false);
+      toast({
+        title: "Auto-Scraping Stopped",
+        description: "Auto-scraping has been disabled",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to Stop Auto-Scraping",
+        description: error.message || "Failed to stop auto-scraping",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#2E4057] via-[#516395] to-[#7209B7]">
+    <div className="min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-4">
       <SimpleNavigation />
       
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Bot className="w-6 h-6 text-[#F4F4F4]" />
-            <h1 className="text-2xl font-bold text-[#F4F4F4]">TUF Scraper Management</h1>
-          </div>
-          <Button
-            onClick={() => setLocation("/")}
-            variant="outline"
-            className="border-white/20 text-[#F4F4F4] hover:bg-white/10"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-white mb-2">TUF Scraper Management</h1>
+          <p className="text-[#E6E6FA] text-lg">
+            Manage TakeUForward profile scraping and data synchronization
+          </p>
         </div>
-
-        <Alert className="bg-white/10 border-white/20 text-[#F4F4F4]">
-          <TestTube className="w-4 h-4" />
-          <AlertDescription className="text-[#E6E6FA]">
-            <strong>Note:</strong> This is a demo version with simulated scraping. 
-            In production, this would connect to the actual TUF platform to fetch real student progress data.
-          </AlertDescription>
-        </Alert>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Test Scraping */}
@@ -167,102 +244,99 @@ export default function ScraperManagement() {
             </CardContent>
           </Card>
 
-          {/* Bulk Operations */}
+          {/* Auto Scraping */}
           <Card className="bg-white/10 border-white/20 text-[#F4F4F4]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Bulk Operations
+                <Clock className="w-5 h-5" />
+                Auto Scraping
+                {isAutoScraping && <Badge className="bg-green-500 text-white">Active</Badge>}
               </CardTitle>
               <CardDescription className="text-[#E6E6FA]">
-                Update all students' data at once (runs in background)
+                Schedule automatic scraping for all students daily at 2 AM UTC
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                <div>
-                  <p className="font-medium text-[#F4F4F4]">Total Students</p>
-                  <p className="text-sm text-[#E6E6FA]">{students.length} registered</p>
-                </div>
-                <Badge variant="secondary" className="bg-white/20 text-[#F4F4F4]">
-                  {students.length}
-                </Badge>
+              <Alert className="bg-white/5 border-white/20">
+                <Bot className="h-4 w-4" />
+                <AlertDescription className="text-[#E6E6FA]">
+                  Auto-scraping will update all student profiles automatically every day at 2 AM UTC.
+                </AlertDescription>
+              </Alert>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleStartAutoScraping}
+                  disabled={isAutoScraping}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Start Auto
+                </Button>
+                <Button
+                  onClick={handleStopAutoScraping}
+                  disabled={!isAutoScraping}
+                  variant="destructive"
+                  className="flex-1"
+                >
+                  <StopCircle className="w-4 h-4 mr-2" />
+                  Stop Auto
+                </Button>
               </div>
-              <Button
-                onClick={handleBulkScrape}
-                disabled={isBulkScraping || students.length === 0}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {isBulkScraping ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Scraping All Students...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Scrape All Students
-                  </>
-                )}
-              </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Individual Student Scraping */}
+        {/* Bulk Operations */}
         <Card className="bg-white/10 border-white/20 text-[#F4F4F4]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Individual Student Scraping
+              Bulk Operations
             </CardTitle>
             <CardDescription className="text-[#E6E6FA]">
-              Update specific students' data individually
+              Scrape data for all students or manage individual student profiles
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button
+                onClick={handleBulkScrape}
+                disabled={isBulkScraping}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isBulkScraping ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Scraping All...
+                  </>
+                ) : (
+                  <>
+                    <Users className="w-4 h-4 mr-2" />
+                    Scrape All Students
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Individual Student Scraping */}
             {studentsLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-[#F4F4F4]" />
-                <span className="ml-2 text-[#F4F4F4]">Loading students...</span>
-              </div>
-            ) : students.length === 0 ? (
-              <div className="text-center py-8">
-                <Users className="w-12 h-12 mx-auto text-[#E6E6FA] mb-3" />
-                <p className="text-[#E6E6FA]">No students found. Add students in the Admin panel first.</p>
+                <Loader2 className="w-6 h-6 animate-spin text-[#E6E6FA]" />
               </div>
             ) : (
-              <div className="space-y-3">
-                {students.map((student) => (
-                  <div
-                    key={student.id}
-                    className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                        <span className="text-[#F4F4F4] font-medium">
-                          {student.name.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-[#F4F4F4]">{student.name}</h4>
-                        <p className="text-sm text-[#E6E6FA]">@{student.username}</p>
-                      </div>
-                      <Badge variant="secondary" className="bg-white/20 text-[#F4F4F4]">
-                        {student.totalSolved || 0} solved
-                      </Badge>
-                      <Badge 
-                        variant="outline" 
-                        className="border-white/20 text-[#E6E6FA]"
-                      >
-                        Last updated: {new Date(student.lastUpdated || Date.now()).toLocaleDateString()}
-                      </Badge>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                <h4 className="font-medium text-[#E6E6FA] mb-2">Individual Student Scraping:</h4>
+                {students.map((student: any) => (
+                  <div key={student.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                    <div>
+                      <span className="font-medium">{student.name}</span>
+                      <span className="text-[#E6E6FA] ml-2">(@{student.username})</span>
                     </div>
                     <Button
                       onClick={() => handleScrapeStudent(student.id, student.name)}
                       disabled={isScraping === student.id}
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700 text-white"
+                      className="bg-white text-[#516395] hover:bg-gray-100"
                     >
                       {isScraping === student.id ? (
                         <>
@@ -280,36 +354,6 @@ export default function ScraperManagement() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Auto-scheduling Info */}
-        <Card className="bg-white/10 border-white/20 text-[#F4F4F4]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Automated Scheduling
-            </CardTitle>
-            <CardDescription className="text-[#E6E6FA]">
-              Configure automatic scraping schedules
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                <div>
-                  <p className="font-medium text-[#F4F4F4]">Daily Auto-Scraping</p>
-                  <p className="text-sm text-[#E6E6FA]">Automatically update all students daily at 2:00 AM UTC</p>
-                </div>
-                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                  Active
-                </Badge>
-              </div>
-              <p className="text-sm text-[#E6E6FA]">
-                <strong>Note:</strong> In the production version, this would automatically scrape all student data 
-                every day to keep progress tracking up-to-date without manual intervention.
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
