@@ -13,7 +13,12 @@ const __dirname = dirname(__filename);
     server: { 
       host: '0.0.0.0',
       port: parseInt(process.env.PORT || '5000', 10),
-      strictPort: true
+      strictPort: true,
+      allowedHosts: [
+        "2b435c2e-b738-4e44-a11a-37bb07e13a6d-00-36mz6qvetz52p.sisko.replit.dev",
+        ".replit.dev",
+        ".repl.co"
+      ]
     },
     root: resolve(__dirname, '../client'),
     configFile: resolve(__dirname, '../vite.config.ts')
