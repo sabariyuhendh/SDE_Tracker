@@ -37,43 +37,12 @@ export class TUFScraper {
         throw new Error("Invalid username provided");
       }
 
-      // Try to scrape from actual TUF website
-      try {
-        const tufUrl = `https://takeuforward.org/profile/${username}`;
-        console.log(`Attempting to fetch TUF profile from: ${tufUrl}`);
-        
-        const response = await fetch(tufUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-          },
-          timeout: 10000
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const html = await response.text();
-        
-        // Basic HTML parsing to extract data (this is a simplified approach)
-        // In a real implementation, you'd want to use a proper HTML parser
-        const profileData = this.parseProfileFromHTML(html, username);
-        
-        if (profileData) {
-          console.log(`Successfully scraped real data for ${username}`);
-          return profileData;
-        }
-      } catch (fetchError) {
-        console.warn(`Failed to fetch real TUF data for ${username}:`, fetchError);
-        console.log(`Falling back to mock data for ${username}`);
-      }
-
-      // Fallback to mock data if real scraping fails
+      // For now, we'll use mock data since TUF scraping requires more sophisticated handling
       console.log(`Using mock data for user: ${username}`);
-      
+
       // Add realistic delay to simulate actual scraping
       await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-      
+
       // Generate deterministic mock data based on username
       const userSeed = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
       const seededRandom = (seed: number) => {
@@ -122,26 +91,14 @@ export class TUFScraper {
         totalSolved: mockData.totalSolved,
         difficultyStats: mockData.difficultyStats
       });
-      
+
       return mockData;
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error scraping TUF profile for ${username}:`, error);
       throw new Error(`Failed to scrape profile for ${username}: ${error.message}`);
     } finally {
       this.scrapingInProgress.delete(username);
-    }
-  }
-
-  private parseProfileFromHTML(html: string, username: string): TUFProfileData | null {
-    try {
-      // This is a simplified parser - in reality you'd want to use a proper HTML parser like cheerio
-      // For now, we'll return null to fall back to mock data
-      // You could implement actual parsing logic here if you have access to the TUF HTML structure
-      return null;
-    } catch (error) {
-      console.error(`Error parsing HTML for ${username}:`, error);
-      return null;
     }
   }
 
@@ -179,7 +136,7 @@ export class TUFScraper {
 
   async updateAllStudentsFromTUF(): Promise<void> {
     console.log('Starting bulk update of all students from TUF...');
-    
+
     try {
       const students = await storage.getAllStudents();
       const updatePromises = students.map((student: any) => 
@@ -187,7 +144,7 @@ export class TUFScraper {
       );
 
       const results = await Promise.allSettled(updatePromises);
-      
+
       const successful = results.filter((r: any) => r.status === 'fulfilled' && r.value).length;
       const failed = results.length - successful;
 
