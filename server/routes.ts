@@ -258,17 +258,33 @@ router.post("/api/admin/students/:id/reset", async (req: Request, res: Response)
 router.post("/api/students/:id/scrape", async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
+    
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "Invalid student ID" });
+    }
+    
+    console.log(`Starting scrape for student ID: ${id}`);
     const success = await tufScraper.updateStudentFromTUF(id);
     
     if (!success) {
-      return res.status(400).json({ error: "Failed to scrape student data" });
+      return res.status(400).json({ 
+        error: "Failed to scrape student data", 
+        details: "Scraper returned false - check server logs for details" 
+      });
     }
     
     const updatedStudent = await storage.getStudent(id);
-    res.json({ message: "Student data updated successfully", student: updatedStudent });
-  } catch (error) {
+    res.json({ 
+      message: "Student data updated successfully", 
+      student: updatedStudent,
+      source: "mock_data"
+    });
+  } catch (error: any) {
     console.error("Error scraping student data:", error);
-    res.status(500).json({ error: "Failed to scrape student data" });
+    res.status(500).json({ 
+      error: "Failed to scrape student data", 
+      details: error.message || "Unknown error occurred"
+    });
   }
 });
 
@@ -307,20 +323,33 @@ router.post("/api/scrape/stop-auto", async (req: Request, res: Response) => {
 router.post("/api/scrape/test", async (req: Request, res: Response) => {
   try {
     const { username } = req.body;
-    if (!username) {
-      return res.status(400).json({ error: "Username is required" });
+    if (!username || typeof username !== 'string' || username.trim().length === 0) {
+      return res.status(400).json({ error: "Valid username is required" });
     }
     
-    const scrapedData = await tufScraper.scrapeTUFProfile(username);
+    const cleanUsername = username.trim();
+    console.log(`Testing scrape for username: ${cleanUsername}`);
+    
+    const scrapedData = await tufScraper.scrapeTUFProfile(cleanUsername);
     
     if (!scrapedData) {
-      return res.status(400).json({ error: "Failed to scrape profile data" });
+      return res.status(400).json({ 
+        error: "Failed to scrape profile data", 
+        details: "No data returned from scraper" 
+      });
     }
     
-    res.json({ message: "Profile scraped successfully", data: scrapedData });
-  } catch (error) {
+    res.json({ 
+      message: "Profile scraped successfully", 
+      data: scrapedData,
+      source: "mock_data" // Indicate this is mock data for now
+    });
+  } catch (error: any) {
     console.error("Error testing scrape:", error);
-    res.status(500).json({ error: "Failed to test scraping" });
+    res.status(500).json({ 
+      error: "Failed to test scraping", 
+      details: error.message || "Unknown error occurred"
+    });
   }
 });
 
