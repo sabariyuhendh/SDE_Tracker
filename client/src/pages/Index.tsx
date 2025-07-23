@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ClassDashboard } from '@/components/ClassDashboard';
 import { StudentManager } from '@/components/StudentManager';
 import { ClassWeekendReview } from '@/components/ClassWeekendReview';
-import { Navigation } from '@/components/Navigation';
+import SimpleNavigation from '@/components/SimpleNavigation';
 import AdminPanel from '@/components/AdminPanel';
 
 type TabType = 'dashboard' | 'students' | 'review' | 'admin';
@@ -66,18 +66,34 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-[#2E4057] via-[#516395] to-[#7209B7]">
+      <SimpleNavigation />
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* Navigation */}
-        <Navigation
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          isDarkMode={isDarkMode}
-          onToggleTheme={toggleTheme}
-        />
+        {/* Tab Navigation */}
+        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6">
+          <div className="flex space-x-1 bg-white/10 rounded-lg p-1">
+            {[
+              { id: 'dashboard', label: 'Dashboard' },
+              { id: 'students', label: 'Students' },
+              { id: 'review', label: 'Review' },
+              { id: 'admin', label: 'Admin' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? 'bg-white text-[#516395] shadow-sm'
+                    : 'text-[#E6E6FA] hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        {/* Main Content with smooth transitions */}
-        <main className="container mx-auto px-6 pb-8">
+        {/* Main Content */}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -86,11 +102,11 @@ const Index = () => {
               exit="out"
               variants={pageVariants}
               transition={pageTransition}
+              className="space-y-6"
             >
               {renderTabContent()}
             </motion.div>
           </AnimatePresence>
-        </main>
       </div>
     </div>
   );

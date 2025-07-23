@@ -1,42 +1,18 @@
 // TUF Class Tracker - Main Class Dashboard
 
 import { motion } from 'framer-motion';
-import { Trophy, Users, TrendingUp, Calendar, Eye } from 'lucide-react';
+import { Trophy, Users, TrendingUp, Calendar, Eye, BookOpen, Target, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-
-interface Student {
-  id: number;
-  username: string;
-  name: string;
-  avatar?: string;
-  totalSolved: number;
-  percentage: number;
-}
+import { useStudents } from "@/hooks/useHardcodedData";
 
 export const ClassDashboard = () => {
   const [, setLocation] = useLocation();
-
-  const { data: studentsData, isLoading } = useQuery<{ students: Student[] }>({
-    queryKey: ["/api/students"],
-  });
-
-  const { data: statsData } = useQuery<any>({
-    queryKey: ["/api/class/stats"],
-  });
-
-  const { data: leaderboardData } = useQuery<{ leaderboard: Student[] }>({
-    queryKey: ["/api/class/leaderboard"],
-  });
-
-  const students = studentsData?.students || [];
-  const stats = statsData || {};
-  const leaderboard = leaderboardData?.leaderboard?.slice(0, 5) || [];
+  const { students, isLoading } = useStudents();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -53,10 +29,35 @@ export const ClassDashboard = () => {
     visible: { opacity: 1, y: 0 }
   };
 
+  // Calculate class statistics
+  const classStats = {
+    totalStudents: students.length,
+    totalProblems: students.reduce((sum, s) => sum + (s.totalSolved || 0), 0),
+    averageProgress: students.length > 0 
+      ? Math.round(students.reduce((sum, s) => {
+          const topicProgress = s.topicProgress || {};
+          const totalTopics = Object.keys(topicProgress).length;
+          const avgPercentage = totalTopics > 0 
+            ? Object.values(topicProgress).reduce((pSum, topic) => pSum + topic.percentage, 0) / totalTopics
+            : 0;
+          return sum + avgPercentage;
+        }, 0) / students.length)
+      : 0,
+    topPerformer: students.length > 0 
+      ? students.reduce((top, current) => 
+          (current.totalSolved || 0) > (top.totalSolved || 0) ? current : top
+        )
+      : null
+  };
+
+  const leaderboard = [...students]
+    .sort((a, b) => (b.totalSolved || 0) - (a.totalSolved || 0))
+    .slice(0, 5);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-foreground font-light">Loading dashboard...</div>
+        <div className="text-[#F4F4F4] font-light">Loading dashboard...</div>
       </div>
     );
   }
@@ -66,12 +67,24 @@ export const ClassDashboard = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex items-center justify-center min-h-[400px] bg-card rounded-lg border border-border"
+        className="flex flex-col items-center justify-center min-h-[400px] space-y-6"
       >
-        <div className="text-center space-y-4">
-          <Users className="w-12 h-12 mx-auto text-muted-foreground" />
-          <h3 className="text-xl font-light text-foreground">No Students Added Yet</h3>
-          <p className="text-muted-foreground font-light">Add your first student to see class progress</p>
+        <div className="text-center space-y-4 max-w-md">
+          <div className="w-24 h-24 mx-auto bg-white/10 rounded-full flex items-center justify-center">
+            <Users className="w-12 h-12 text-[#E6E6FA]" />
+          </div>
+          <h3 className="text-2xl font-bold text-[#F4F4F4]">Welcome to TUF Class Tracker!</h3>
+          <p className="text-[#E6E6FA] leading-relaxed">
+            Get started by adding your first students in the Admin panel. 
+            Track their competitive programming progress, view leaderboards, and manage class performance all in one place.
+          </p>
+          <Button
+            onClick={() => setLocation("/admin")}
+            className="bg-white text-[#516395] hover:bg-gray-100 px-6 py-3"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Add Students
+          </Button>
         </div>
       </motion.div>
     );
@@ -84,182 +97,227 @@ export const ClassDashboard = () => {
       animate="visible"
       className="space-y-6"
     >
-      {/* Class Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <motion.div variants={itemVariants}>
-          <Card className="bg-card border border-border text-card-foreground transition-transform hover:scale-105 duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-secondary">
-                  <Users className="w-6 h-6 text-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground font-light">Total Students</p>
-                  <p className="text-2xl font-light">{students.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+      {/* Welcome Header */}
+      <motion.div variants={itemVariants} className="text-center space-y-2">
+        <h2 className="text-3xl font-bold text-[#F4F4F4]">Class Dashboard</h2>
+        <p className="text-[#E6E6FA]">Track your students' competitive programming journey</p>
+      </motion.div>
 
-        <motion.div variants={itemVariants}>
-          <Card className="bg-card border border-border text-card-foreground transition-transform hover:scale-105 duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-secondary">
-                  <Trophy className="w-6 h-6 text-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground font-light">Problems Solved</p>
-                  <p className="text-2xl font-light">{stats.totalSolved || 0}</p>
-                  <p className="text-xs text-muted-foreground font-light">
-                    Avg: {stats.averageSolved || 0} per student
-                  </p>
-                </div>
+      {/* Stats Cards */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-500/20 rounded-lg">
+                <Users className="w-6 h-6 text-blue-400" />
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card className="bg-card border border-border text-card-foreground transition-transform hover:scale-105 duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-secondary">
-                  <TrendingUp className="w-6 h-6 text-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground font-light">This Week</p>
-                  <p className="text-2xl font-light">{stats.weeklyProgress || 0}</p>
-                  <p className="text-xs text-muted-foreground font-light">
-                    Active students
-                  </p>
-                </div>
+              <div>
+                <p className="text-2xl font-bold">{classStats.totalStudents}</p>
+                <p className="text-sm text-[#E6E6FA]">Total Students</p>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <motion.div variants={itemVariants}>
-          <Card className="bg-card border border-border text-card-foreground transition-transform hover:scale-105 duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-secondary">
-                  <Calendar className="w-6 h-6 text-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground font-light">Avg Completion</p>
-                  <p className="text-2xl font-light">{stats.averageCompletion || 0}%</p>
-                  <Progress 
-                    value={stats.averageCompletion || 0} 
-                    className="h-2 mt-2 bg-secondary"
-                  />
-                </div>
+        <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-green-500/20 rounded-lg">
+                <Target className="w-6 h-6 text-green-400" />
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+              <div>
+                <p className="text-2xl font-bold">{classStats.totalProblems}</p>
+                <p className="text-sm text-[#E6E6FA]">Problems Solved</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Class Leaderboard and Quick Actions */}
+        <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-500/20 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-purple-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{classStats.averageProgress}%</p>
+                <p className="text-sm text-[#E6E6FA]">Average Progress</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-yellow-500/20 rounded-lg">
+                <Trophy className="w-6 h-6 text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-lg font-bold truncate max-w-[120px]">
+                  {classStats.topPerformer?.name || 'N/A'}
+                </p>
+                <p className="text-sm text-[#E6E6FA]">Top Performer</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Students */}
         <motion.div variants={itemVariants}>
-          <Card className="bg-card border border-border text-card-foreground transition-transform hover:scale-105 duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Trophy className="w-5 h-5 text-foreground" />
-                  <span className="font-light">Top Performers</span>
-                </div>
-                <Button 
-                  onClick={() => setLocation('/leaderboard')}
-                  variant="ghost" 
-                  size="sm"
-                  className="text-muted-foreground hover:bg-secondary font-light"
-                >
-                  View All
-                </Button>
+          <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-400" />
+                Top Students
               </CardTitle>
+              <Button
+                onClick={() => setLocation("/leaderboard")}
+                variant="outline"
+                size="sm"
+                className="border-white/20 text-[#F4F4F4] hover:bg-white/10"
+              >
+                <Eye className="w-4 h-4 mr-1" />
+                View All
+              </Button>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               {leaderboard.map((student, index) => (
-                <motion.div
-                  key={student.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center space-x-4 p-3 rounded-lg bg-secondary hover:bg-accent transition-colors cursor-pointer"
-                  onClick={() => setLocation(`/student/${student.id}`)}
-                >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-light ${
-                    index === 0 ? 'bg-primary text-primary-foreground' :
-                    index === 1 ? 'bg-secondary text-secondary-foreground' :
-                    index === 2 ? 'bg-muted text-muted-foreground' :
-                    'bg-accent text-accent-foreground'
-                  }`}>
-                    {index + 1}
+                <div key={student.id} className="flex items-center gap-4 p-3 bg-white/5 rounded-lg">
+                  <div className="flex items-center justify-center w-8 h-8 bg-white/10 rounded-full">
+                    <span className="text-sm font-bold text-[#F4F4F4]">{index + 1}</span>
                   </div>
-                  
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src={student.avatar} alt={student.name} />
-                    <AvatarFallback className="bg-secondary text-foreground font-light">
-                      {student.name.split(" ").map(n => n[0]).join("")}
+                    <AvatarImage src={student.avatar || undefined} />
+                    <AvatarFallback className="bg-white/20 text-[#F4F4F4]">
+                      {student.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  
                   <div className="flex-1">
-                    <p className="font-light">{student.name}</p>
-                    <p className="text-sm text-muted-foreground font-light">@{student.username}</p>
+                    <h4 className="font-medium text-[#F4F4F4]">{student.name}</h4>
+                    <p className="text-sm text-[#E6E6FA]">@{student.username}</p>
                   </div>
-                  
                   <div className="text-right">
-                    <p className="font-light text-foreground">{student.totalSolved}</p>
-                    <p className="text-xs text-muted-foreground font-light">
-                      {student.percentage}%
-                    </p>
+                    <Badge variant="secondary" className="bg-white/20 text-[#F4F4F4]">
+                      {student.totalSolved || 0} solved
+                    </Badge>
                   </div>
-                </motion.div>
+                </div>
               ))}
               {leaderboard.length === 0 && (
-                <p className="text-center text-muted-foreground py-4 font-light">No students yet</p>
+                <p className="text-center text-[#E6E6FA] py-4">No student data yet</p>
               )}
             </CardContent>
           </Card>
         </motion.div>
-        
+
         {/* Recent Activity */}
         <motion.div variants={itemVariants}>
           <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5 text-green-400" />
-                <span>Recent Activity</span>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-blue-400" />
+                Class Overview
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {students.slice(0, 3).map((student) => (
-                  <div key={student.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={student.avatar} alt={student.name} />
-                      <AvatarFallback className="bg-white/20 text-[#F4F4F4] text-xs">
-                        {student.name.split(" ").map(n => n[0]).join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{student.name}</p>
-                      <p className="text-xs text-[#E6E6FA]">{student.totalSolved} problems solved</p>
-                    </div>
-                  </div>
-                ))}
-                {students.length === 0 && (
-                  <p className="text-center text-[#E6E6FA] py-4">No recent activity</p>
-                )}
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#E6E6FA]">Arrays & Hashing</span>
+                  <span className="text-[#F4F4F4] font-medium">
+                    {Math.round(students.reduce((sum, s) => sum + (s.topicProgress?.["Arrays"]?.percentage || 0), 0) / (students.length || 1))}%
+                  </span>
+                </div>
+                <Progress 
+                  value={students.reduce((sum, s) => sum + (s.topicProgress?.["Arrays"]?.percentage || 0), 0) / (students.length || 1)}
+                  className="h-2 bg-white/10"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#E6E6FA]">Dynamic Programming</span>
+                  <span className="text-[#F4F4F4] font-medium">
+                    {Math.round(students.reduce((sum, s) => sum + (s.topicProgress?.["Dynamic Programming"]?.percentage || 0), 0) / (students.length || 1))}%
+                  </span>
+                </div>
+                <Progress 
+                  value={students.reduce((sum, s) => sum + (s.topicProgress?.["Dynamic Programming"]?.percentage || 0), 0) / (students.length || 1)}
+                  className="h-2 bg-white/10"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#E6E6FA]">Binary Trees</span>
+                  <span className="text-[#F4F4F4] font-medium">
+                    {Math.round(students.reduce((sum, s) => sum + (s.topicProgress?.["Binary Trees"]?.percentage || 0), 0) / (students.length || 1))}%
+                  </span>
+                </div>
+                <Progress 
+                  value={students.reduce((sum, s) => sum + (s.topicProgress?.["Binary Trees"]?.percentage || 0), 0) / (students.length || 1)}
+                  className="h-2 bg-white/10"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-white/10">
+                <div className="flex items-center gap-3 text-sm text-[#E6E6FA]">
+                  <Calendar className="w-4 h-4" />
+                  <span>Last updated: {new Date().toLocaleDateString()}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
         </motion.div>
       </div>
+
+      {/* Quick Actions */}
+      <motion.div variants={itemVariants}>
+        <Card className="bg-white/10 border-white/20 text-[#F4F4F4] card-hover">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              Quick Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Button
+                onClick={() => setLocation("/admin")}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Manage Students
+              </Button>
+              <Button
+                onClick={() => setLocation("/leaderboard")}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white"
+              >
+                <Trophy className="w-4 h-4 mr-2" />
+                View Leaderboard
+              </Button>
+              <Button
+                onClick={() => setLocation("/scraper")}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Update Data
+              </Button>
+              <Button
+                onClick={() => window.open('https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/', '_blank')}
+                variant="outline"
+                className="border-white/20 text-[#F4F4F4] hover:bg-white/10"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                TUF Sheet
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </motion.div>
   );
 };
