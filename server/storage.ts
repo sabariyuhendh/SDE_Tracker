@@ -308,6 +308,7 @@ export class DatabaseStorage implements IStorage {
       const avatar = insertStudent.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${insertStudent.username}`;
       
       const [student] = await db.insert(students).values({
+        userId: insertStudent.userId || 'Volcaryx',
         username: insertStudent.username,
         name: insertStudent.name,
         avatar: avatar,

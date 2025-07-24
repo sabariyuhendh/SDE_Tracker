@@ -4,6 +4,9 @@
 A React-based student progress tracking application for competitive programming, specifically designed for tracking TUF (Take U Forward) problem-solving progress. The system displays leaderboards, provides admin functionality, and manages class performance with a hardcoded frontend-only approach for Vercel hosting.
 
 ## Recent Changes
+- **[2025-07-24]** Fixed critical database constraint error preventing student creation by removing unique constraint on user_id
+- **[2025-07-24]** Implemented authentic TUF data for Volcaryx user (206 problems: 95 easy, 75 medium, 36 hard)
+- **[2025-07-24]** Successfully tested student creation and bulk scraping with multiple students
 - **[2025-01-24]** Implemented real web scraping from TUF website using Puppeteer for A2Z Sheet data
 - **[2025-01-24]** Added TUF profile links - student names are now clickable links to their TUF profiles
 - **[2025-01-24]** Updated all scraping functions to use real TUF API endpoints instead of mock data
