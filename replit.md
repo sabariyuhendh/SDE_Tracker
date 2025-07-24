@@ -4,12 +4,13 @@
 A React-based student progress tracking application for competitive programming, specifically designed for tracking TUF (Take U Forward) problem-solving progress. The system displays leaderboards, provides admin functionality, and manages class performance with a hardcoded frontend-only approach for Vercel hosting.
 
 ## Recent Changes
-- **[2025-07-24]** COMPLETE ARCHITECTURAL PIVOT: Removed all hardcoded user data from backend
-- **[2025-07-24]** Implemented frontend-only solution with serverless Puppeteer API (/api/scrape.js)
-- **[2025-07-24]** Added @sparticuz/chromium + puppeteer-core for Vercel deployment compatibility
-- **[2025-07-24]** Created frontend-only data management system (client/src/data/hardcodedData.ts)
-- **[2025-07-24]** Updated hooks to work without backend database dependencies
-- **[2025-07-24]** Added vercel.json configuration for serverless function deployment
+- **[2025-07-24]** COMPLETE BACKEND ARCHITECTURE: Created comprehensive Node.js backend for Render deployment
+- **[2025-07-24]** Built complete business logic layer with Express server (backend/server.js)
+- **[2025-07-24]** Implemented full Puppeteer scraping service optimized for Render hosting
+- **[2025-07-24]** Added StudentManager service for in-memory data management
+- **[2025-07-24]** Created ScheduledScraper with cron jobs for daily automated scraping
+- **[2025-07-24]** Added comprehensive API endpoints for all operations
+- **[2025-07-24]** Frontend configured to connect to backend API with environment variables
 - **[2025-01-24]** Implemented real web scraping from TUF website using Puppeteer for A2Z Sheet data
 - **[2025-01-24]** Added TUF profile links - student names are now clickable links to their TUF profiles
 - **[2025-01-24]** Updated all scraping functions to use real TUF API endpoints instead of mock data
@@ -24,13 +25,13 @@ A React-based student progress tracking application for competitive programming,
 - **[2025-01-23]** All components now work without routing dependencies for Vercel deployment
 
 ## Architecture
-- **Frontend**: React with TypeScript, Vite dev server, Tailwind CSS with shadcn/ui components
-- **Serverless API**: Single /api/scrape.js endpoint using @sparticuz/chromium for Vercel compatibility
-- **Data Management**: Frontend-only with in-memory storage (no database dependencies)
-- **Data Scraping**: Real-time TUF profile scraping via serverless Puppeteer API
-- **Routing**: Wouter for client-side routing
-- **Styling**: Consistent black gradient theme (from-gray-900 via-gray-800 to-black)
-- **Deployment**: Vercel-ready with serverless functions and static frontend
+- **Frontend**: React with TypeScript, Vite dev server, Tailwind CSS with shadcn/ui components (Vercel)
+- **Backend**: Node.js Express server with comprehensive business logic (Render)
+- **Data Management**: In-memory student management with StudentManager service
+- **Data Scraping**: Full Puppeteer integration with TUFScraper service
+- **Scheduled Jobs**: Automated daily scraping with ScheduledScraper and cron
+- **API Layer**: RESTful endpoints for all CRUD operations and analytics
+- **Deployment**: Separated frontend (Vercel) + backend (Render) architecture
 
 ## Key Features
 - Student management via Admin panel (add, view, reset, delete students)

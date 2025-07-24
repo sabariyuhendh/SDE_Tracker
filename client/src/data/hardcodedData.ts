@@ -103,15 +103,22 @@ export const hardcodedAPI = {
     difficultyStats: { easy: number; medium: number; hard: number };
     topicProgress: { [topic: string]: { solved: number; total: number; percentage: number } };
   }> {
-    // Call serverless scraping API
-    const response = await fetch(`/api/scrape?username=${username}`);
+    // Call backend API for scraping
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    const response = await fetch(`${backendUrl}/api/scrape/test`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username })
+    });
     
     if (!response.ok) {
       throw new Error(`Scraping failed: ${response.statusText}`);
     }
     
     const data = await response.json();
-    return data;
+    return data.profileData || data;
   },
 
   async testScraping(username: string): Promise<any> {

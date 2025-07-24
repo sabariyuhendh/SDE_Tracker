@@ -1,0 +1,38 @@
+# Render.com deployment configuration for TUF Tracker Backend
+
+services:
+  - type: web
+    name: tuf-tracker-backend
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        fromService:
+          type: web
+          name: tuf-tracker-backend
+          property: port
+    healthCheckPath: /health
+    
+    # Auto-deploy configuration
+    autoDeploy: true
+    
+    # Environment specific settings
+    region: oregon
+    
+    # Resource limits
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+    
+    # Build settings
+    rootDir: backend
+    
+    # Custom headers for CORS
+    headers:
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: "*"
