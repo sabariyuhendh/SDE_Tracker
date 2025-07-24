@@ -194,7 +194,16 @@ export default function LeaderboardPage() {
                       </Avatar>
                       
                       <div>
-                        <h3 className="text-lg font-semibold text-white">{student.name}</h3>
+                        <h3 className="text-lg font-semibold">
+                          <a 
+                            href={`https://takeuforward.org/profile/${student.username}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-white hover:text-blue-300 hover:underline transition-colors duration-200"
+                          >
+                            {student.name}
+                          </a>
+                        </h3>
                         <p className="text-sm text-gray-300">@{student.username}</p>
                       </div>
                     </div>

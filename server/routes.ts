@@ -254,6 +254,39 @@ router.post("/api/admin/students/:id/reset", async (req: Request, res: Response)
   }
 });
 
+// Test TUF scraping route
+router.post("/api/scrape/test", async (req: Request, res: Response) => {
+  try {
+    const { username } = req.body;
+    
+    if (!username) {
+      return res.status(400).json({ error: "Username is required" });
+    }
+    
+    console.log(`Test scraping TUF profile for: ${username}`);
+    const profileData = await tufScraper.scrapeTUFProfile(username);
+    
+    if (!profileData) {
+      return res.status(400).json({ 
+        error: "Failed to scrape TUF profile", 
+        details: "Profile may be private or username doesn't exist" 
+      });
+    }
+    
+    res.json({ 
+      message: "Test scraping successful", 
+      profileData: profileData,
+      profileUrl: `https://takeuforward.org/profile/${username}`
+    });
+  } catch (error: any) {
+    console.error("Error in test scraping:", error);
+    res.status(500).json({ 
+      error: "Failed to test scrape profile", 
+      details: error.message || "Unknown error occurred"
+    });
+  }
+});
+
 // TUF Scraper routes
 router.post("/api/students/:id/scrape", async (req: Request, res: Response) => {
   try {

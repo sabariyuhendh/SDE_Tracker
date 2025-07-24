@@ -4,10 +4,11 @@
 A React-based student progress tracking application for competitive programming, specifically designed for tracking TUF (Take U Forward) problem-solving progress. The system displays leaderboards, provides admin functionality, and manages class performance with a hardcoded frontend-only approach for Vercel hosting.
 
 ## Recent Changes
-- **[2025-01-24]** Added Weekend Review page with Personal and Class review tabs, including Calendar icon navigation
-- **[2025-01-24]** Fixed bulk scraping and auto-scraping functionality to work with frontend-only architecture
-- **[2025-01-24]** Implemented auto-scraping for newly added students with 2-second delay
-- **[2025-01-24]** Updated scraper management to use hardcoded mock data generation instead of backend API calls
+- **[2025-01-24]** Implemented real web scraping from TUF website using Puppeteer for A2Z Sheet data
+- **[2025-01-24]** Added TUF profile links - student names are now clickable links to their TUF profiles
+- **[2025-01-24]** Updated all scraping functions to use real TUF API endpoints instead of mock data
+- **[2025-01-24]** Added test scraping endpoint for real data validation from TUF profiles
+- **[2025-01-24]** Fixed auto-scraping to work with real backend API calls for newly added students
 - **[2025-01-23]** Successfully converted application from database-dependent to frontend-only with hardcoded data
 - **[2025-01-23]** Updated entire application with black gradient theme (removing purple gradients)
 - **[2025-01-23]** Removed theme toggle functionality completely as requested
@@ -18,19 +19,22 @@ A React-based student progress tracking application for competitive programming,
 
 ## Architecture
 - **Frontend**: React with TypeScript, Vite dev server, Tailwind CSS with shadcn/ui components
-- **Data Layer**: Hardcoded data in frontend using React hooks for state management
+- **Backend**: Express server with real TUF web scraping using Puppeteer
+- **Data Scraping**: Real data extraction from TUF A2Z Sheet profiles (not mock data)
 - **Routing**: Wouter for client-side routing
 - **Styling**: Consistent black gradient theme (from-gray-900 via-gray-800 to-black)
-- **Components**: Single-page application with AdminPanel, ClassDashboard, LeaderboardPage, ScraperManagement accessible via tabs
+- **Components**: Full-stack application with AdminPanel, ClassDashboard, LeaderboardPage, ScraperManagement
 
 ## Key Features
 - Student management via Admin panel (add, view, reset, delete students)
 - Class dashboard with statistics and progress overview
 - Leaderboard with sorting by total problems or percentage
 - Weekend Review page with Personal and Class review tabs
-- Scraper management with working bulk and auto-scraping (frontend-only with mock data)
-- Auto-scraping for newly added students
-- Single-page application with tab navigation (no routing conflicts)
+- Real TUF web scraping from A2Z Sheet profiles using Puppeteer
+- Clickable student names linking to TUF profiles
+- Bulk and individual scraping with real data from TUF website
+- Auto-scraping for newly added students (real API calls)
+- Test scraping functionality for validating TUF usernames
 
 ## File Structure
 ```
@@ -64,13 +68,13 @@ server/
 - Delete student functionality in admin panel
 
 ## Current Status
-The application has been successfully converted to a frontend-only implementation:
-- ✅ Hardcoded data layer with React state management
-- ✅ All components updated with consistent styling
-- ✅ Simple Vite dev server without database dependencies
-- ✅ Navigation system working across all pages
+The application has been successfully converted to use real web scraping:
+- ✅ Real TUF web scraping using Puppeteer from A2Z Sheet data
+- ✅ Clickable student names that link to TUF profiles
+- ✅ Backend API endpoints for test, individual, and bulk scraping
+- ✅ Auto-scraping functionality with real API calls
+- ✅ Complete scraper management interface with real data
 - ✅ Admin panel for student management
-- ✅ Leaderboard with sorting capabilities
-- ✅ Demo scraper management interface
+- ✅ Leaderboard with real progress data
 
-**Ready for Vercel deployment**: The application now works entirely with frontend hardcoded data and can be deployed to Vercel without any backend dependencies.
+**Real Data Scraping Active**: The application now fetches authentic data from TUF website A2Z Sheet section only, ignoring SDE Sheet, Blind 75, and other sections as requested.

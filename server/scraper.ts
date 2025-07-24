@@ -31,72 +31,172 @@ export class TUFScraper {
     this.scrapingInProgress.add(username);
     console.log(`Starting to scrape TUF profile for user: ${username}`);
 
+    let browser: any = null;
     try {
       // Validate username
       if (!username || username.trim().length === 0) {
         throw new Error("Invalid username provided");
       }
 
-      // For now, we'll use mock data since TUF scraping requires more sophisticated handling
-      console.log(`Using mock data for user: ${username}`);
+      console.log(`Launching browser for real TUF scraping: ${username}`);
+      
+      // Launch puppeteer browser
+      browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu'
+        ]
+      });
 
-      // Add realistic delay to simulate actual scraping
-      await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+      const page = await browser.newPage();
+      
+      // Set viewport and user agent
+      await page.setViewport({ width: 1280, height: 720 });
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 
-      // Generate deterministic mock data based on username
-      const userSeed = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const seededRandom = (seed: number) => {
-        const x = Math.sin(seed) * 10000;
-        return x - Math.floor(x);
-      };
+      // Navigate to TUF profile page
+      const profileUrl = `https://takeuforward.org/profile/${username}`;
+      console.log(`Navigating to: ${profileUrl}`);
+      
+      await page.goto(profileUrl, { 
+        waitUntil: 'networkidle2',
+        timeout: 30000 
+      });
 
-      const easyCount = Math.floor(seededRandom(userSeed + 1) * 80) + 20;
-      const mediumCount = Math.floor(seededRandom(userSeed + 2) * 60) + 15;
-      const hardCount = Math.floor(seededRandom(userSeed + 3) * 40) + 5;
+      // Wait for the A2Z Sheet section to load
+      await page.waitForSelector('[data-testid="a2z-sheet"], .a2z-sheet, div:contains("A2Z Sheet")', { 
+        timeout: 15000 
+      });
 
-      const mockData: TUFProfileData = {
+      // Extract data from the A2Z Sheet section
+      const profileData = await page.evaluate(() => {
+        // Find A2Z Sheet progress data
+        const findTextContent = (text: string) => {
+          const xpath = `//text()[contains(., '${text}')]/parent::*`;
+          return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        };
+
+        // Extract total progress from A2Z Sheet
+        let totalSolved = 0;
+        let totalProblems = 455; // A2Z Sheet total
+        
+        // Look for progress indicators
+        const progressElements = document.querySelectorAll('div, span, p');
+        let easyCount = 0, mediumCount = 0, hardCount = 0;
+
+        progressElements.forEach(el => {
+          const text = el.textContent || '';
+          
+          // Match patterns like "236/455" for total progress
+          const totalMatch = text.match(/(\d+)\/455/);
+          if (totalMatch) {
+            totalSolved = parseInt(totalMatch[1]);
+          }
+
+          // Match patterns for difficulty stats
+          const easyMatch = text.match(/Easy.*?(\d+)\/\d+|(\d+).*?completed.*?easy/i);
+          if (easyMatch) {
+            easyCount = parseInt(easyMatch[1] || easyMatch[2]);
+          }
+
+          const mediumMatch = text.match(/Medium.*?(\d+)\/\d+|(\d+).*?completed.*?medium/i);
+          if (mediumMatch) {
+            mediumCount = parseInt(mediumMatch[1] || mediumMatch[2]);
+          }
+
+          const hardMatch = text.match(/Hard.*?(\d+)\/\d+|(\d+).*?completed.*?hard/i);
+          if (hardMatch) {
+            hardCount = parseInt(hardMatch[1] || hardMatch[2]);
+          }
+        });
+
+        // Extract topic-wise progress
+        const topicProgress: any = {};
+        const topicNames = [
+          'Arrays', 'Matrix', 'String', 'Searching & Sorting', 'Linked List',
+          'Binary Trees', 'Binary Search Trees', 'Greedy', 'Backtracking',
+          'Stacks and Queues', 'Heap', 'Graph', 'Trie', 'Dynamic Programming',
+          'Binary Search', 'Recursion', 'Bit Manipulation', 'Two Pointer'
+        ];
+
+        // Look for topic progress in the "Topics covered" section
+        const topicElements = document.querySelectorAll('[class*="topic"], [class*="progress"], .topic-item, div');
+        
+        topicNames.forEach(topic => {
+          topicElements.forEach(el => {
+            const text = el.textContent || '';
+            // Match patterns like "Arrays • 102" or "Arrays: 102/X"
+            const topicMatch = text.match(new RegExp(`${topic}.*?(\\d+)`, 'i'));
+            if (topicMatch) {
+              const solved = parseInt(topicMatch[1]);
+              // Set estimated totals based on A2Z sheet structure
+              const estimatedTotals: any = {
+                'Arrays': 53, 'Matrix': 6, 'String': 15, 'Searching & Sorting': 18,
+                'Linked List': 31, 'Binary Trees': 39, 'Binary Search Trees': 22,
+                'Greedy': 15, 'Backtracking': 19, 'Stacks and Queues': 23,
+                'Heap': 12, 'Graph': 54, 'Trie': 7, 'Dynamic Programming': 60,
+                'Binary Search': 35, 'Recursion': 25, 'Bit Manipulation': 8, 'Two Pointer': 12
+              };
+              
+              const total = estimatedTotals[topic] || 20;
+              topicProgress[topic] = {
+                solved: solved,
+                total: total,
+                percentage: Math.round((solved / total) * 100)
+              };
+            }
+          });
+        });
+
+        return {
+          totalSolved,
+          totalProblems,
+          easyCount,
+          mediumCount,
+          hardCount,
+          topicProgress
+        };
+      });
+
+      // Structure the scraped data
+      const scrapedData: TUFProfileData = {
         username,
-        totalSolved: easyCount + mediumCount + hardCount,
+        totalSolved: profileData.totalSolved || 0,
         difficultyStats: {
-          easy: easyCount,
-          medium: mediumCount,
-          hard: hardCount
+          easy: profileData.easyCount || 0,
+          medium: profileData.mediumCount || 0,
+          hard: profileData.hardCount || 0
         },
-        topicProgress: {
-          "Array": { solved: Math.floor(seededRandom(userSeed + 4) * 25), total: 25, percentage: 0 },
-          "Matrix": { solved: Math.floor(seededRandom(userSeed + 5) * 6), total: 6, percentage: 0 },
-          "String": { solved: Math.floor(seededRandom(userSeed + 6) * 15), total: 15, percentage: 0 },
-          "Searching & Sorting": { solved: Math.floor(seededRandom(userSeed + 7) * 18), total: 18, percentage: 0 },
-          "Linked List": { solved: Math.floor(seededRandom(userSeed + 8) * 14), total: 14, percentage: 0 },
-          "Binary Trees": { solved: Math.floor(seededRandom(userSeed + 9) * 25), total: 25, percentage: 0 },
-          "Binary Search Trees": { solved: Math.floor(seededRandom(userSeed + 10) * 10), total: 10, percentage: 0 },
-          "Greedy": { solved: Math.floor(seededRandom(userSeed + 11) * 12), total: 12, percentage: 0 },
-          "Backtracking": { solved: Math.floor(seededRandom(userSeed + 12) * 9), total: 9, percentage: 0 },
-          "Stacks and Queues": { solved: Math.floor(seededRandom(userSeed + 13) * 12), total: 12, percentage: 0 },
-          "Heap": { solved: Math.floor(seededRandom(userSeed + 14) * 6), total: 6, percentage: 0 },
-          "Graph": { solved: Math.floor(seededRandom(userSeed + 15) * 15), total: 15, percentage: 0 },
-          "Trie": { solved: Math.floor(seededRandom(userSeed + 16) * 6), total: 6, percentage: 0 },
-          "Dynamic Programming": { solved: Math.floor(seededRandom(userSeed + 17) * 17), total: 17, percentage: 0 }
-        }
+        topicProgress: profileData.topicProgress || {}
       };
 
-      // Calculate percentages
-      Object.keys(mockData.topicProgress).forEach(topic => {
-        const progress = mockData.topicProgress[topic];
-        progress.percentage = Math.round((progress.solved / progress.total) * 100);
+      console.log(`Successfully scraped TUF profile for ${username}:`, {
+        totalSolved: scrapedData.totalSolved,
+        easy: scrapedData.difficultyStats.easy,
+        medium: scrapedData.difficultyStats.medium,
+        hard: scrapedData.difficultyStats.hard,
+        topicsFound: Object.keys(scrapedData.topicProgress).length
       });
 
-      console.log(`Mock data generated for ${username}:`, {
-        username: mockData.username,
-        totalSolved: mockData.totalSolved,
-        difficultyStats: mockData.difficultyStats
-      });
-
-      return mockData;
+      await browser.close();
+      return scrapedData;
 
     } catch (error: any) {
       console.error(`Error scraping TUF profile for ${username}:`, error);
-      throw new Error(`Failed to scrape profile for ${username}: ${error.message}`);
+      
+      if (browser) {
+        await browser.close();
+      }
+      
+      // Return null to indicate scraping failed - don't throw error to prevent breaking the flow
+      console.log(`Scraping failed for ${username}, this may be due to profile privacy settings or network issues`);
+      return null;
     } finally {
       this.scrapingInProgress.delete(username);
     }

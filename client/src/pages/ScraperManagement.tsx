@@ -40,32 +40,33 @@ export default function ScraperManagement() {
 
       if (recentStudents.length > 0) {
         recentStudents.forEach(student => {
-          setTimeout(() => {
-            const scrapedData = generateMockScrapedData(student.username);
-            
-            // Calculate percentages
-            Object.keys(scrapedData.topicProgress).forEach(topic => {
-              const progress = scrapedData.topicProgress[topic as keyof typeof scrapedData.topicProgress];
-              progress.percentage = Math.round((progress.solved / progress.total) * 100);
-            });
+          setTimeout(async () => {
+            try {
+              const response = await fetch(`/api/students/${student.id}/scrape`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              });
 
-            updateStudent(student.id, {
-              totalSolved: scrapedData.totalSolved,
-              difficultyStats: scrapedData.difficultyStats,
-              topicProgress: scrapedData.topicProgress
-            });
-
-            toast({
-              title: "Auto-Scraping New Student",
-              description: `Automatically scraped data for new student: ${student.name}`,
-            });
+              if (response.ok) {
+                toast({
+                  title: "Auto-Scraping New Student",
+                  description: `Automatically scraped real TUF data for new student: ${student.name}`,
+                });
+              } else {
+                console.warn(`Failed to auto-scrape new student: ${student.name}`);
+              }
+            } catch (error) {
+              console.error(`Error auto-scraping new student ${student.name}:`, error);
+            }
           }, 2000); // 2 second delay for new students
         });
       }
     }
   }, [students, isAutoScraping]);
 
-  // Demo test scraping function (frontend-only)
+  // Real TUF scraping test function using backend API
   const handleTestScrape = async () => {
     if (!testUsername.trim()) {
       toast({
@@ -78,28 +79,32 @@ export default function ScraperManagement() {
 
     setIsTestingScrape(true);
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Demo data for testing
-      const demoData = {
-        totalSolved: Math.floor(Math.random() * 200) + 50,
-        difficultyStats: {
-          easy: Math.floor(Math.random() * 80) + 20,
-          medium: Math.floor(Math.random() * 60) + 15,
-          hard: Math.floor(Math.random() * 30) + 5,
-        }
-      };
+      // Call backend API for real scraping
+      const response = await fetch('/api/scrape/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: testUsername })
+      });
 
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to scrape profile data');
+      }
+
+      const scrapedData = data.profileData;
+      
       toast({
-        title: "Demo Test Scraping Successful",
-        description: `Demo scrape for ${testUsername}. Total problems: ${demoData.totalSolved}, Easy: ${demoData.difficultyStats.easy}, Medium: ${demoData.difficultyStats.medium}, Hard: ${demoData.difficultyStats.hard}`,
+        title: "Real TUF Scraping Successful",
+        description: `Scraped real data for ${testUsername}. Total A2Z problems: ${scrapedData.totalSolved}/455, Easy: ${scrapedData.difficultyStats.easy}, Medium: ${scrapedData.difficultyStats.medium}, Hard: ${scrapedData.difficultyStats.hard}`,
       });
       setTestUsername("");
     } catch (error: any) {
       toast({
         title: "Test Scraping Failed",
-        description: error.message || "Failed to scrape profile data. Please check the username.",
+        description: error.message || "Failed to scrape profile data. Check if the username exists and profile is public.",
         variant: "destructive",
       });
     } finally {
@@ -145,37 +150,31 @@ export default function ScraperManagement() {
     };
   };
 
-  // Scrape individual student (frontend-only with mock data)
+  // Scrape individual student using real API
   const handleScrapeStudent = async (studentId: number, studentName: string, studentUsername: string) => {
     setIsScraping(studentId);
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1500));
-      
-      // Generate new mock data
-      const scrapedData = generateMockScrapedData(studentUsername);
-      
-      // Calculate percentages
-      Object.keys(scrapedData.topicProgress).forEach(topic => {
-        const progress = scrapedData.topicProgress[topic as keyof typeof scrapedData.topicProgress];
-        progress.percentage = Math.round((progress.solved / progress.total) * 100);
+      const response = await fetch(`/api/students/${studentId}/scrape`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
-      // Update student with new data
-      updateStudent(studentId, {
-        totalSolved: scrapedData.totalSolved,
-        difficultyStats: scrapedData.difficultyStats,
-        topicProgress: scrapedData.topicProgress
-      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to scrape student data');
+      }
 
       toast({
         title: "Student Data Updated",
-        description: `Successfully scraped and updated data for ${studentName}. Total: ${scrapedData.totalSolved} problems`,
+        description: `Successfully scraped real TUF data for ${studentName}`,
       });
     } catch (error: any) {
       toast({
-        title: "Scraping Failed",
-        description: error.message || `Failed to scrape data for ${studentName}`,
+        title: "Scraping Failed", 
+        description: error.message || `Failed to scrape real data for ${studentName}. Check if TUF profile is public.`,
         variant: "destructive",
       });
     } finally {
@@ -183,47 +182,31 @@ export default function ScraperManagement() {
     }
   };
 
-  // Bulk scrape all students (frontend-only with mock data)
+  // Bulk scrape all students using real API
   const handleBulkScrape = async () => {
     setIsBulkScraping(true);
     try {
-      let successCount = 0;
-      const totalStudents = students.length;
-      
-      // Process students in batches to avoid overwhelming the UI
-      for (let i = 0; i < students.length; i++) {
-        const student = students[i];
-        
-        // Generate new mock data for each student
-        const scrapedData = generateMockScrapedData(student.username);
-        
-        // Calculate percentages
-        Object.keys(scrapedData.topicProgress).forEach(topic => {
-          const progress = scrapedData.topicProgress[topic as keyof typeof scrapedData.topicProgress];
-          progress.percentage = Math.round((progress.solved / progress.total) * 100);
-        });
+      const response = await fetch('/api/scrape/all', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-        // Update student data
-        updateStudent(student.id, {
-          totalSolved: scrapedData.totalSolved,
-          difficultyStats: scrapedData.difficultyStats,
-          topicProgress: scrapedData.topicProgress
-        });
-        
-        successCount++;
-        
-        // Add small delay between updates to simulate real scraping
-        await new Promise(resolve => setTimeout(resolve, 300));
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to start bulk scraping');
       }
 
       toast({
-        title: "Bulk Scraping Completed",
-        description: `Successfully updated data for ${successCount}/${totalStudents} students`,
+        title: "Bulk Scraping Started",
+        description: "Real TUF data scraping started in background for all students",
       });
     } catch (error: any) {
       toast({
         title: "Bulk Scraping Failed",
-        description: error.message || "Failed to complete bulk scraping",
+        description: error.message || "Failed to start bulk scraping",
         variant: "destructive",
       });
     } finally {
@@ -231,43 +214,28 @@ export default function ScraperManagement() {
     }
   };
 
-  // Start auto scraping (frontend-only simulation)
+  // Start auto scraping using real API
   const handleStartAutoScraping = async () => {
     try {
-      // Set up interval for demonstration (every 30 seconds instead of daily)
-      const interval = setInterval(async () => {
-        console.log('Auto-scraping: Updating all students...');
-        
-        // Update all students with fresh mock data
-        students.forEach(student => {
-          const scrapedData = generateMockScrapedData(student.username + Date.now()); // Add timestamp for variation
-          
-          // Calculate percentages
-          Object.keys(scrapedData.topicProgress).forEach(topic => {
-            const progress = scrapedData.topicProgress[topic as keyof typeof scrapedData.topicProgress];
-            progress.percentage = Math.round((progress.solved / progress.total) * 100);
-          });
+      const response = await fetch('/api/scrape/start-auto', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-          updateStudent(student.id, {
-            totalSolved: scrapedData.totalSolved,
-            difficultyStats: scrapedData.difficultyStats,
-            topicProgress: scrapedData.topicProgress
-          });
-        });
-        
-        toast({
-          title: "Auto-Scraping Update",
-          description: `Automatically updated ${students.length} students`,
-        });
-      }, 30000); // 30 seconds for demo purposes
+      const data = await response.json();
 
-      setAutoScrapingInterval(interval);
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to start auto-scraping');
+      }
+
       setIsAutoScraping(true);
       localStorage.setItem('autoScrapingEnabled', 'true');
       
       toast({
         title: "Auto-Scraping Started",
-        description: "Auto-scraping is now active (updates every 30 seconds for demo)",
+        description: "Real TUF auto-scraping is now active (daily at 2 AM UTC)",
       });
     } catch (error: any) {
       toast({
@@ -281,11 +249,19 @@ export default function ScraperManagement() {
   // Stop auto scraping
   const handleStopAutoScraping = async () => {
     try {
-      if (autoScrapingInterval) {
-        clearInterval(autoScrapingInterval);
-        setAutoScrapingInterval(null);
+      const response = await fetch('/api/scrape/stop-auto', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to stop auto-scraping');
       }
-      
+
       setIsAutoScraping(false);
       localStorage.setItem('autoScrapingEnabled', 'false');
       

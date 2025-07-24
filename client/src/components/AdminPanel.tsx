@@ -284,7 +284,16 @@ export default function AdminPanel() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h4 className="font-medium text-white">{student.name}</h4>
+                    <h4 className="font-medium">
+                      <a 
+                        href={`https://takeuforward.org/profile/${student.username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white hover:text-blue-300 hover:underline transition-colors duration-200"
+                      >
+                        {student.name}
+                      </a>
+                    </h4>
                     <p className="text-sm text-gray-300">@{student.username}</p>
                   </div>
                   <Badge variant="secondary" className="bg-white/20 text-white">
