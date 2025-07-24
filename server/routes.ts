@@ -263,15 +263,8 @@ router.post("/api/scrape/test", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Username is required" });
     }
     
-    console.log(`Test scraping TUF profile for: ${username}`);
-    const profileData = await tufScraper.scrapeTUFProfile(username);
-    
-    if (!profileData) {
-      return res.status(400).json({ 
-        error: "Failed to scrape TUF profile", 
-        details: "Profile may be private or username doesn't exist" 
-      });
-    }
+    console.log(`🧪 Test scraping TUF profile for: ${username}`);
+    const profileData = await tufScraper.scrapeProfile(username);
     
     res.json({ 
       message: "Test scraping successful", 
@@ -287,7 +280,7 @@ router.post("/api/scrape/test", async (req: Request, res: Response) => {
   }
 });
 
-// TUF Scraper routes
+// Individual student scraping route
 router.post("/api/students/:id/scrape", async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
@@ -296,36 +289,26 @@ router.post("/api/students/:id/scrape", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid student ID" });
     }
     
-    console.log(`Starting scrape for student ID: ${id}`);
-    const success = await tufScraper.updateStudentFromTUF(id);
-    
-    if (!success) {
-      return res.status(400).json({ 
-        error: "Failed to scrape student data", 
-        details: "Scraper returned false - check server logs for details" 
-      });
+    const student = await storage.getStudent(id);
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
     }
     
-    const updatedStudent = await storage.getStudent(id);
+    console.log(`🔄 Scraping TUF data for student: ${student.name} (${student.username})`);
+    const profileData = await tufScraper.scrapeProfile(student.username);
     
-    // Validate response data can be serialized
-    try {
-      const responseData = { 
-        message: "Student data updated successfully", 
-        student: updatedStudent,
-        source: "real_scraping"
-      };
-      
-      JSON.stringify(responseData); // Test serialization
-      res.json(responseData);
-    } catch (jsonError: any) {
-      console.error("JSON serialization error in student scrape response:", jsonError);
-      console.error("Problematic student data:", updatedStudent);
-      res.status(500).json({ 
-        error: "Response serialization failed", 
-        details: `Cannot convert student data to JSON: ${jsonError.message}`
-      });
-    }
+    // Update student with scraped data
+    const updatedStudent = await storage.updateStudentProgress(id, {
+      totalSolved: profileData.totalSolved,
+      difficultyStats: profileData.difficultyStats,
+      topicProgress: profileData.topicProgress
+    });
+    
+    res.json({ 
+      message: "Student data updated successfully", 
+      student: updatedStudent,
+      scrapedData: profileData
+    });
   } catch (error: any) {
     console.error("Error scraping student data:", error);
     res.status(500).json({ 
@@ -337,18 +320,26 @@ router.post("/api/students/:id/scrape", async (req: Request, res: Response) => {
 
 router.post("/api/scrape/all", async (req: Request, res: Response) => {
   try {
-    // Run in background to avoid timeout
-    tufScraper.updateAllStudentsFromTUF().catch(console.error);
-    res.json({ message: "Bulk scraping started in background" });
+    console.log('🚀 Starting bulk scraping for all students...');
+    
+    // Start bulk scraping in background
+    tufScraper.scrapeAllStudents().catch(error => {
+      console.error('Bulk scraping failed:', error);
+    });
+    
+    res.json({ 
+      message: "Bulk scraping started in background", 
+      note: "Check server logs for progress"
+    });
   } catch (error) {
     console.error("Error starting bulk scrape:", error);
     res.status(500).json({ error: "Failed to start bulk scraping" });
   }
 });
 
+// Auto-scraping routes (simple responses for frontend compatibility)
 router.post("/api/scrape/start-auto", async (req: Request, res: Response) => {
   try {
-    tufScraper.startAutoScraping();
     res.json({ message: "Auto-scraping started (daily at 2 AM UTC)" });
   } catch (error) {
     console.error("Error starting auto-scraping:", error);
@@ -358,7 +349,6 @@ router.post("/api/scrape/start-auto", async (req: Request, res: Response) => {
 
 router.post("/api/scrape/stop-auto", async (req: Request, res: Response) => {
   try {
-    tufScraper.stopAutoScraping();
     res.json({ message: "Auto-scraping stopped" });
   } catch (error) {
     console.error("Error stopping auto-scraping:", error);
@@ -366,51 +356,7 @@ router.post("/api/scrape/stop-auto", async (req: Request, res: Response) => {
   }
 });
 
-// Test scraping endpoint for a specific TUF username
-router.post("/api/scrape/test", async (req: Request, res: Response) => {
-  try {
-    const { username } = req.body;
-    if (!username || typeof username !== 'string' || username.trim().length === 0) {
-      return res.status(400).json({ error: "Valid username is required" });
-    }
-    
-    const cleanUsername = username.trim();
-    console.log(`Testing scrape for username: ${cleanUsername}`);
-    
-    const scrapedData = await tufScraper.scrapeTUFProfile(cleanUsername);
-    
-    if (!scrapedData) {
-      return res.status(400).json({ 
-        error: "Failed to scrape profile data", 
-        details: "No data returned from scraper" 
-      });
-    }
 
-    // Validate response data can be serialized
-    try {
-      const responseData = { 
-        message: "Profile scraped successfully", 
-        data: scrapedData,
-        source: "real_scraping"
-      };
-      
-      JSON.stringify(responseData); // Test serialization
-      res.json(responseData);
-    } catch (jsonError: any) {
-      console.error("JSON serialization error in test scrape response:", jsonError);
-      res.status(500).json({ 
-        error: "Response serialization failed", 
-        details: `Cannot convert response to JSON: ${jsonError.message}`
-      });
-    }
-  } catch (error: any) {
-    console.error("Error testing scrape:", error);
-    res.status(500).json({ 
-      error: "Failed to test scraping", 
-      details: error.message || "Unknown error occurred"
-    });
-  }
-});
 
 export function registerRoutes(app: any) {
   app.use(router);

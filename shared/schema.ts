@@ -65,6 +65,7 @@ export const insertStudentSchema = createInsertSchema(students).pick({
 });
 
 export const updateStudentProgressSchema = z.object({
+  totalSolved: z.number().optional(),
   topicProgress: z.record(z.object({
     solved: z.number(),
     total: z.number(),

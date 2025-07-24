@@ -479,4 +479,40 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
+// Update the DatabaseStorage updateStudentProgress method for totalSolved
+const originalUpdateStudentProgress = DatabaseStorage.prototype.updateStudentProgress;
+DatabaseStorage.prototype.updateStudentProgress = async function(id: number, updates: UpdateStudentProgress): Promise<Student | undefined> {
+  try {
+    const currentStudent = await this.getStudent(id);
+    if (!currentStudent) return undefined;
+
+    // Use provided totalSolved or calculate from topic progress
+    let newTotalSolved = currentStudent.totalSolved;
+    if (updates.totalSolved !== undefined) {
+      newTotalSolved = updates.totalSolved;
+    } else if (updates.topicProgress) {
+      newTotalSolved = Object.values(updates.topicProgress).reduce(
+        (sum, topic) => sum + topic.solved, 0
+      );
+    }
+
+    const [updated] = await db
+      .update(students)
+      .set({
+        totalSolved: newTotalSolved,
+        topicProgress: updates.topicProgress || currentStudent.topicProgress,
+        difficultyStats: updates.difficultyStats || currentStudent.difficultyStats,
+        weeklyProgress: updates.weeklyProgress || currentStudent.weeklyProgress,
+        lastUpdated: new Date(),
+      })
+      .where(eq(students.id, id))
+      .returning();
+
+    return updated;
+  } catch (error) {
+    console.error('Error updating student progress:', error);
+    return undefined;
+  }
+};
+
 export const storage = new DatabaseStorage();

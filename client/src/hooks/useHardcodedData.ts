@@ -1,6 +1,5 @@
-// Custom hooks to work with hardcoded data instead of API calls
+// Custom hooks to work with database API calls
 import { useState, useEffect } from 'react';
-import { mockAPI, getStoredStudents, getStoredReflections } from '@/data/hardcodedData';
 import type { Student, WeeklyReflection } from '../../../shared/schema';
 
 // Hook to manage students data
@@ -12,10 +11,12 @@ export function useStudents() {
     const loadStudents = async () => {
       setIsLoading(true);
       try {
-        const data = await mockAPI.getStudents();
-        setStudents(data.students);
+        const response = await fetch('/api/students');
+        const data = await response.json();
+        setStudents(data.students || []);
       } catch (error) {
         console.error('Failed to load students:', error);
+        setStudents([]);
       } finally {
         setIsLoading(false);
       }
@@ -26,7 +27,22 @@ export function useStudents() {
 
   const addStudent = async (studentData: Omit<Student, 'id' | 'createdAt' | 'lastUpdated'>) => {
     try {
-      const newStudent = await mockAPI.addStudent(studentData);
+      const response = await fetch('/api/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: studentData.username,
+          name: studentData.name,
+          avatar: studentData.avatar
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create student');
+      }
+      
+      const data = await response.json();
+      const newStudent = data.student;
       setStudents(prev => [...prev, newStudent]);
       return newStudent;
     } catch (error) {
@@ -37,10 +53,19 @@ export function useStudents() {
 
   const updateStudent = async (id: number, updates: Partial<Student>) => {
     try {
-      const updatedStudent = await mockAPI.updateStudent(id, updates);
-      if (updatedStudent) {
-        setStudents(prev => prev.map(s => s.id === id ? updatedStudent : s));
+      const response = await fetch(`/api/students/${id}/progress`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update student');
       }
+      
+      const data = await response.json();
+      const updatedStudent = data.student;
+      setStudents(prev => prev.map(s => s.id === id ? updatedStudent : s));
       return updatedStudent;
     } catch (error) {
       console.error('Failed to update student:', error);
@@ -50,10 +75,19 @@ export function useStudents() {
 
   const markProblemsAsSolved = async (id: number, topic: string, count: number) => {
     try {
-      const updatedStudent = await mockAPI.markProblemsAsSolved(id, topic, count);
-      if (updatedStudent) {
-        setStudents(prev => prev.map(s => s.id === id ? updatedStudent : s));
+      const response = await fetch(`/api/admin/students/${id}/mark-solved`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, count })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to mark problems as solved');
       }
+      
+      const data = await response.json();
+      const updatedStudent = data.student;
+      setStudents(prev => prev.map(s => s.id === id ? updatedStudent : s));
       return updatedStudent;
     } catch (error) {
       console.error('Failed to mark problems as solved:', error);
@@ -63,10 +97,18 @@ export function useStudents() {
 
   const resetStudent = async (id: number) => {
     try {
-      const resetStudent = await mockAPI.resetStudent(id);
-      if (resetStudent) {
-        setStudents(prev => prev.map(s => s.id === id ? resetStudent : s));
+      const response = await fetch(`/api/admin/students/${id}/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to reset student');
       }
+      
+      const data = await response.json();
+      const resetStudent = data.student;
+      setStudents(prev => prev.map(s => s.id === id ? resetStudent : s));
       return resetStudent;
     } catch (error) {
       console.error('Failed to reset student:', error);
@@ -76,11 +118,16 @@ export function useStudents() {
 
   const deleteStudent = async (id: number) => {
     try {
-      const success = await mockAPI.deleteStudent(id);
-      if (success) {
-        setStudents(prev => prev.filter(s => s.id !== id));
+      const response = await fetch(`/api/students/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete student');
       }
-      return success;
+      
+      setStudents(prev => prev.filter(s => s.id !== id));
+      return true;
     } catch (error) {
       console.error('Failed to delete student:', error);
       throw error;
@@ -95,9 +142,14 @@ export function useStudents() {
     markProblemsAsSolved,
     resetStudent,
     deleteStudent,
-    refetch: () => {
-      const data = getStoredStudents();
-      setStudents(data);
+    refetch: async () => {
+      try {
+        const response = await fetch('/api/students');
+        const data = await response.json();
+        setStudents(data.students || []);
+      } catch (error) {
+        console.error('Failed to refetch students:', error);
+      }
     }
   };
 }
@@ -108,13 +160,15 @@ export function useWeeklyReflections() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadReflections = () => {
+    const loadReflections = async () => {
       setIsLoading(true);
       try {
-        const data = getStoredReflections();
-        setReflections(data);
+        const response = await fetch('/api/reflections');
+        const data = await response.json();
+        setReflections(data.reflections || []);
       } catch (error) {
         console.error('Failed to load reflections:', error);
+        setReflections([]);
       } finally {
         setIsLoading(false);
       }
