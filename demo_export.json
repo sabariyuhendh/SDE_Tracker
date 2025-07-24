@@ -1,0 +1,17 @@
+{
+  "username": "demo-user",
+  "totalSolved": 150,
+  "difficultyStats": {
+    "easy": 70,
+    "medium": 60,
+    "hard": 20
+  },
+  "topicProgress": {
+    "Arrays": {
+      "solved": 25,
+      "total": 50,
+      "percentage": 50
+    }
+  },
+  "lastUpdated": "2025-07-24T09:45:51.342Z"
+}

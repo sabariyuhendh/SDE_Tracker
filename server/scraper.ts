@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import * as cheerio from 'cheerio';
+import { HTTPTUFScraper } from './http-scraper';
 import { storage } from './storage';
 
 export interface TUFProfileData {
@@ -21,6 +22,7 @@ export interface TUFProfileData {
 
 export class TUFScraper {
   private browser: any = null;
+  private httpScraper = new HTTPTUFScraper();
 
   async initBrowser() {
     if (!this.browser) {

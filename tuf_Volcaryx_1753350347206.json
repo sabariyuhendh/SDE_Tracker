@@ -1,0 +1,87 @@
+{
+  "username": "Volcaryx",
+  "totalSolved": 206,
+  "difficultyStats": {
+    "easy": 95,
+    "medium": 75,
+    "hard": 36
+  },
+  "topicProgress": {
+    "Arrays": {
+      "solved": 20,
+      "total": 53,
+      "percentage": 38
+    },
+    "Matrix": {
+      "solved": 2,
+      "total": 6,
+      "percentage": 33
+    },
+    "String": {
+      "solved": 20,
+      "total": 43,
+      "percentage": 47
+    },
+    "Searching & Sorting": {
+      "solved": 14,
+      "total": 36,
+      "percentage": 39
+    },
+    "Linked List": {
+      "solved": 16,
+      "total": 31,
+      "percentage": 52
+    },
+    "Binary Trees": {
+      "solved": 18,
+      "total": 39,
+      "percentage": 46
+    },
+    "Binary Search Trees": {
+      "solved": 10,
+      "total": 22,
+      "percentage": 45
+    },
+    "Greedy": {
+      "solved": 6,
+      "total": 15,
+      "percentage": 40
+    },
+    "Backtracking": {
+      "solved": 10,
+      "total": 19,
+      "percentage": 53
+    },
+    "Stacks and Queues": {
+      "solved": 8,
+      "total": 23,
+      "percentage": 35
+    },
+    "Heap": {
+      "solved": 5,
+      "total": 12,
+      "percentage": 42
+    },
+    "Graph": {
+      "solved": 27,
+      "total": 54,
+      "percentage": 50
+    },
+    "Trie": {
+      "solved": 3,
+      "total": 7,
+      "percentage": 43
+    },
+    "Dynamic Programming": {
+      "solved": 30,
+      "total": 60,
+      "percentage": 50
+    },
+    "Binary Search": {
+      "solved": 13,
+      "total": 35,
+      "percentage": 37
+    }
+  },
+  "lastUpdated": "2025-07-24T09:45:47.186Z"
+}
