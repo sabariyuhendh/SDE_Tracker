@@ -1,22 +1,21 @@
-// Custom hooks to work with database API calls
+// Frontend-only hooks for TUF Class Tracker
 import { useState, useEffect } from 'react';
-import type { Student, WeeklyReflection } from '../../../shared/schema';
+import { hardcodedAPI, getInitialData, type StudentData } from '../data/hardcodedData';
 
-// Hook to manage students data
+// Hook to manage students data without backend
 export function useStudents() {
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<StudentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadStudents = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/students');
-        const data = await response.json();
-        setStudents(data.students || []);
+        const studentData = await hardcodedAPI.getAllStudents();
+        setStudents(studentData);
       } catch (error) {
         console.error('Failed to load students:', error);
-        setStudents([]);
+        setStudents(getInitialData());
       } finally {
         setIsLoading(false);
       }
@@ -25,24 +24,9 @@ export function useStudents() {
     loadStudents();
   }, []);
 
-  const addStudent = async (studentData: Omit<Student, 'id' | 'createdAt' | 'lastUpdated'>) => {
+  const addStudent = async (name: string, username: string) => {
     try {
-      const response = await fetch('/api/students', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: studentData.username,
-          name: studentData.name,
-          avatar: studentData.avatar
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create student');
-      }
-      
-      const data = await response.json();
-      const newStudent = data.student;
+      const newStudent = await hardcodedAPI.addStudent(name, username);
       setStudents(prev => [...prev, newStudent]);
       return newStudent;
     } catch (error) {
@@ -51,85 +35,48 @@ export function useStudents() {
     }
   };
 
-  const updateStudent = async (id: number, updates: Partial<Student>) => {
-    try {
-      const response = await fetch(`/api/students/${id}/progress`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update student');
-      }
-      
-      const data = await response.json();
-      const updatedStudent = data.student;
-      setStudents(prev => prev.map(s => s.id === id ? updatedStudent : s));
-      return updatedStudent;
-    } catch (error) {
-      console.error('Failed to update student:', error);
-      throw error;
-    }
-  };
-
-  const markProblemsAsSolved = async (id: number, topic: string, count: number) => {
-    try {
-      const response = await fetch(`/api/admin/students/${id}/mark-solved`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, count })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to mark problems as solved');
-      }
-      
-      const data = await response.json();
-      const updatedStudent = data.student;
-      setStudents(prev => prev.map(s => s.id === id ? updatedStudent : s));
-      return updatedStudent;
-    } catch (error) {
-      console.error('Failed to mark problems as solved:', error);
-      throw error;
-    }
-  };
-
-  const resetStudent = async (id: number) => {
-    try {
-      const response = await fetch(`/api/admin/students/${id}/reset`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to reset student');
-      }
-      
-      const data = await response.json();
-      const resetStudent = data.student;
-      setStudents(prev => prev.map(s => s.id === id ? resetStudent : s));
-      return resetStudent;
-    } catch (error) {
-      console.error('Failed to reset student:', error);
-      throw error;
-    }
-  };
-
   const deleteStudent = async (id: number) => {
     try {
-      const response = await fetch(`/api/students/${id}`, {
-        method: 'DELETE'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete student');
+      const success = await hardcodedAPI.deleteStudent(id);
+      if (success) {
+        setStudents(prev => prev.filter(s => s.id !== id));
       }
-      
-      setStudents(prev => prev.filter(s => s.id !== id));
-      return true;
+      return success;
     } catch (error) {
       console.error('Failed to delete student:', error);
+      throw error;
+    }
+  };
+
+  const scrapeStudent = async (id: number) => {
+    try {
+      const updatedStudent = await hardcodedAPI.scrapeStudent(id);
+      if (updatedStudent) {
+        setStudents(prev => prev.map(s => s.id === id ? updatedStudent : s));
+      }
+      return updatedStudent;
+    } catch (error) {
+      console.error('Failed to scrape student:', error);
+      throw error;
+    }
+  };
+
+  const scrapeAllStudents = async () => {
+    try {
+      await hardcodedAPI.scrapeAllStudents();
+      const updatedStudents = await hardcodedAPI.getAllStudents();
+      setStudents(updatedStudents);
+    } catch (error) {
+      console.error('Failed to bulk scrape:', error);
+      throw error;
+    }
+  };
+
+  const testScraping = async (username: string) => {
+    try {
+      return await hardcodedAPI.testScraping(username);
+    } catch (error) {
+      console.error('Failed to test scraping:', error);
       throw error;
     }
   };
@@ -138,69 +85,41 @@ export function useStudents() {
     students,
     isLoading,
     addStudent,
-    updateStudent,
-    markProblemsAsSolved,
-    resetStudent,
     deleteStudent,
-    refetch: async () => {
-      try {
-        const response = await fetch('/api/students');
-        const data = await response.json();
-        setStudents(data.students || []);
-      } catch (error) {
-        console.error('Failed to refetch students:', error);
-      }
-    }
+    scrapeStudent,
+    scrapeAllStudents,
+    testScraping
   };
 }
 
-// Hook to manage weekly reflections
+// Hook for frontend-only weekly reflections (placeholder)
 export function useWeeklyReflections() {
-  const [reflections, setReflections] = useState<WeeklyReflection[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadReflections = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/reflections');
-        const data = await response.json();
-        setReflections(data.reflections || []);
-      } catch (error) {
-        console.error('Failed to load reflections:', error);
-        setReflections([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadReflections();
-  }, []);
+  const [reflections, setReflections] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   return {
     reflections,
     isLoading,
-    refetch: () => {
-      const data = getStoredReflections();
-      setReflections(data);
-    }
+    addReflection: async () => {},
+    refetch: () => {}
   };
 }
 
-// Hook to get individual student data
+// Hook for individual student data
 export function useStudent(id: number) {
-  const [student, setStudent] = useState<Student | null>(null);
+  const [student, setStudent] = useState<StudentData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadStudent = () => {
+    const loadStudent = async () => {
       setIsLoading(true);
       try {
-        const students = getStoredStudents();
+        const students = await hardcodedAPI.getAllStudents();
         const foundStudent = students.find(s => s.id === id);
         setStudent(foundStudent || null);
       } catch (error) {
         console.error('Failed to load student:', error);
+        setStudent(null);
       } finally {
         setIsLoading(false);
       }

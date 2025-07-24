@@ -4,9 +4,12 @@
 A React-based student progress tracking application for competitive programming, specifically designed for tracking TUF (Take U Forward) problem-solving progress. The system displays leaderboards, provides admin functionality, and manages class performance with a hardcoded frontend-only approach for Vercel hosting.
 
 ## Recent Changes
-- **[2025-07-24]** Fixed critical database constraint error preventing student creation by removing unique constraint on user_id
-- **[2025-07-24]** Implemented authentic TUF data for Volcaryx user (206 problems: 95 easy, 75 medium, 36 hard)
-- **[2025-07-24]** Successfully tested student creation and bulk scraping with multiple students
+- **[2025-07-24]** COMPLETE ARCHITECTURAL PIVOT: Removed all hardcoded user data from backend
+- **[2025-07-24]** Implemented frontend-only solution with serverless Puppeteer API (/api/scrape.js)
+- **[2025-07-24]** Added @sparticuz/chromium + puppeteer-core for Vercel deployment compatibility
+- **[2025-07-24]** Created frontend-only data management system (client/src/data/hardcodedData.ts)
+- **[2025-07-24]** Updated hooks to work without backend database dependencies
+- **[2025-07-24]** Added vercel.json configuration for serverless function deployment
 - **[2025-01-24]** Implemented real web scraping from TUF website using Puppeteer for A2Z Sheet data
 - **[2025-01-24]** Added TUF profile links - student names are now clickable links to their TUF profiles
 - **[2025-01-24]** Updated all scraping functions to use real TUF API endpoints instead of mock data
@@ -22,11 +25,12 @@ A React-based student progress tracking application for competitive programming,
 
 ## Architecture
 - **Frontend**: React with TypeScript, Vite dev server, Tailwind CSS with shadcn/ui components
-- **Backend**: Express server with real TUF web scraping using Puppeteer
-- **Data Scraping**: Real data extraction from TUF A2Z Sheet profiles (not mock data)
+- **Serverless API**: Single /api/scrape.js endpoint using @sparticuz/chromium for Vercel compatibility
+- **Data Management**: Frontend-only with in-memory storage (no database dependencies)
+- **Data Scraping**: Real-time TUF profile scraping via serverless Puppeteer API
 - **Routing**: Wouter for client-side routing
 - **Styling**: Consistent black gradient theme (from-gray-900 via-gray-800 to-black)
-- **Components**: Full-stack application with AdminPanel, ClassDashboard, LeaderboardPage, ScraperManagement
+- **Deployment**: Vercel-ready with serverless functions and static frontend
 
 ## Key Features
 - Student management via Admin panel (add, view, reset, delete students)

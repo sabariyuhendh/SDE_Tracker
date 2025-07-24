@@ -1,0 +1,161 @@
+After so many research I got the solution. If you want to use Puppeteer with serverless architecture I found this official git repo . This is only supported specified version of chromium with particular puppeteer version. To check check which version you should use support check .
+
+or if Migration from chrome-aws-lambda
+
+const chromium = require("@sparticuz/chromium");
+const puppeteer = require("puppeteer-core");
+
+exports.handler = async (event, context, callback) => {
+  let result = null;
+  let browser = null;
+
+  try {
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
+    });
+
+    let page = await browser.newPage();
+
+    await page.goto(event.url || 'https://example.com');
+
+    result = await page.title();
+  } catch (error) {
+    return callback(error);
+  } finally {
+    if (browser !== null) {
+      await browser.close();
+    }
+  }
+
+  return callback(null, result);
+};
+
+
+ChatGPT said:
+Awesome! You're now diving into the right direction: deploying Puppeteer in a serverless-compatible way, using @sparticuz/chromium + puppeteer-core — the official way for Vercel / AWS Lambda.
+
+Let’s break down what you discovered and how to use it in your case.
+
+✅ What You Discovered
+Vercel (and most serverless environments) don’t support full Puppeteer + Chromium by default.
+
+But they support a custom headless Chromium binary using:
+
+@sparticuz/chromium — lightweight Lambda-compatible Chromium
+
+puppeteer-core — allows specifying your own executable path
+
+Together, these allow Puppeteer to work in serverless environments like Vercel, AWS Lambda, or Netlify Functions.
+
+💡 How This Helps You
+You can now:
+
+Run real-time Puppeteer scraping from an API route in Vercel!
+
+No need to manually run anything locally.
+
+Your frontend can just fetch('/api/scrape?username=volcaryx')
+
+⚙️ What You Should Do Next
+Let’s prepare the full setup to:
+
+Run Puppeteer in Vercel using @sparticuz/chromium
+
+Take a username as a query param
+
+Scrape the TUF profile
+
+Return real-time progress as JSON
+
+✅ Project Structure (Next.js Example)
+kotlin
+Copy
+Edit
+/api/scrape.js  ← this is the only backend API function
+/pages/index.js ← your frontend that fetches & displays scraped data
+✅ api/scrape.js (Serverless Function – Realtime Scraper)
+js
+Copy
+Edit
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
+
+export default async function handler(req, res) {
+  const { username = 'volcaryx' } = req.query;
+
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+    ignoreHTTPSErrors: true,
+  });
+
+  const page = await browser.newPage();
+  await page.goto(`https://takeuforward.org/user/${username}`, {
+    waitUntil: 'networkidle2',
+  });
+
+  const data = await page.evaluate(() => {
+    const totalSolved = document.querySelector('.totalSolved')?.textContent || 0;
+    const easy = document.querySelector('.easy-count')?.textContent || 0;
+    const medium = document.querySelector('.medium-count')?.textContent || 0;
+    const hard = document.querySelector('.hard-count')?.textContent || 0;
+
+    return {
+      totalSolved: Number(totalSolved),
+      difficultyStats: {
+        easy: Number(easy),
+        medium: Number(medium),
+        hard: Number(hard),
+      },
+    };
+  });
+
+  await browser.close();
+
+  res.status(200).json({ username, ...data });
+}
+✅ Vercel Deployment Checklist
+Install dependencies:
+
+bash
+Copy
+Edit
+npm install puppeteer-core @sparticuz/chromium
+Set your vercel.json (if needed):
+
+json
+Copy
+Edit
+{
+  "functions": {
+    "api/scrape.js": {
+      "memory": 512,
+      "maxDuration": 10
+    }
+  }
+}
+Deploy to Vercel as a frontend + API hybrid app.
+
+✅ Frontend (React fetch example)
+js
+Copy
+Edit
+const fetchProgress = async (username) => {
+  const res = await fetch(`/api/scrape?username=${username}`);
+  const data = await res.json();
+  console.log(data);
+};
+🧠 Notes
+This uses edge-compatible Chromium, optimized for Vercel's serverless functions.
+
+Real-time scraping from the frontend is now fully supported (via /api/scrape route).
+
+No backend server — only one API file that lives inside your frontend repo.
+
+You can host the entire project on Vercel.
