@@ -228,11 +228,34 @@ export const setStoredReflections = (reflections: WeeklyReflection[]) => {
   }
 };
 
-// Mock API functions that work with local storage
+// Function to load static JSON data
+const loadStaticData = async (filename: string) => {
+  try {
+    const response = await fetch(`/data/${filename}`);
+    if (!response.ok) {
+      throw new Error(`Failed to load ${filename}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.warn(`Failed to load static data from ${filename}, using hardcoded data`);
+    return null;
+  }
+};
+
+// Mock API functions that work with local storage and static JSON
 export const mockAPI = {
-  // Get all students
+  // Get all students - try static data first, fall back to localStorage
   getStudents: async (): Promise<{ students: Student[] }> => {
     await new Promise(resolve => setTimeout(resolve, 300)); // Simulate API delay
+    
+    // Try to load from static JSON first
+    const staticData = await loadStaticData('students.json');
+    if (staticData) {
+      // Store in localStorage for consistency
+      setStoredStudents(staticData);
+      return { students: staticData };
+    }
+    
     return { students: getStoredStudents() };
   },
 

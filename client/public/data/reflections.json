@@ -1,0 +1,20 @@
+
+[
+  {
+    "id": 1,
+    "week": "2024-W02",
+    "date": "2024-01-14",
+    "personalReflection": {
+      "achievements": ["Completed 15 new problems", "Mastered binary search variations"],
+      "challenges": ["Still struggling with advanced DP", "Time management during contests"],
+      "goals": ["Complete 20 problems next week", "Practice more hard problems"],
+      "mood": "motivated"
+    },
+    "classReflection": {
+      "averageProgress": 73,
+      "topPerformers": ["Amit Kumar", "Sarah Chen"],
+      "commonChallenges": ["Dynamic Programming", "Graph algorithms"],
+      "classGoals": ["Improve average solving time", "Focus on hard problems"]
+    }
+  }
+]
