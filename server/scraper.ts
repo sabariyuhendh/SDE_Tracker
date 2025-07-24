@@ -164,17 +164,31 @@ export class TUFScraper {
         };
       });
 
-      // Structure the scraped data
+      // Validate and clean the scraped data
+      console.log('Raw profileData from page evaluation:', JSON.stringify(profileData, null, 2));
+      
+      // Structure the scraped data with validation
       const scrapedData: TUFProfileData = {
-        username,
-        totalSolved: profileData.totalSolved || 0,
+        username: String(username),
+        totalSolved: Number(profileData.totalSolved) || 0,
         difficultyStats: {
-          easy: profileData.easyCount || 0,
-          medium: profileData.mediumCount || 0,
-          hard: profileData.hardCount || 0
+          easy: Number(profileData.easyCount) || 0,
+          medium: Number(profileData.mediumCount) || 0,
+          hard: Number(profileData.hardCount) || 0
         },
-        topicProgress: profileData.topicProgress || {}
+        topicProgress: profileData.topicProgress && typeof profileData.topicProgress === 'object' 
+          ? profileData.topicProgress 
+          : {}
       };
+
+      // Validate the data can be serialized to JSON
+      try {
+        const jsonTest = JSON.stringify(scrapedData);
+        console.log(`JSON serialization test passed for ${username}`);
+      } catch (jsonError) {
+        console.error(`JSON serialization failed for ${username}:`, jsonError);
+        throw new Error(`Data contains non-serializable values: ${jsonError}`);
+      }
 
       console.log(`Successfully scraped TUF profile for ${username}:`, {
         totalSolved: scrapedData.totalSolved,

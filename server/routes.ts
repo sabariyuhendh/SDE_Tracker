@@ -307,11 +307,25 @@ router.post("/api/students/:id/scrape", async (req: Request, res: Response) => {
     }
     
     const updatedStudent = await storage.getStudent(id);
-    res.json({ 
-      message: "Student data updated successfully", 
-      student: updatedStudent,
-      source: "mock_data"
-    });
+    
+    // Validate response data can be serialized
+    try {
+      const responseData = { 
+        message: "Student data updated successfully", 
+        student: updatedStudent,
+        source: "real_scraping"
+      };
+      
+      JSON.stringify(responseData); // Test serialization
+      res.json(responseData);
+    } catch (jsonError: any) {
+      console.error("JSON serialization error in student scrape response:", jsonError);
+      console.error("Problematic student data:", updatedStudent);
+      res.status(500).json({ 
+        error: "Response serialization failed", 
+        details: `Cannot convert student data to JSON: ${jsonError.message}`
+      });
+    }
   } catch (error: any) {
     console.error("Error scraping student data:", error);
     res.status(500).json({ 
@@ -371,12 +385,24 @@ router.post("/api/scrape/test", async (req: Request, res: Response) => {
         details: "No data returned from scraper" 
       });
     }
-    
-    res.json({ 
-      message: "Profile scraped successfully", 
-      data: scrapedData,
-      source: "mock_data" // Indicate this is mock data for now
-    });
+
+    // Validate response data can be serialized
+    try {
+      const responseData = { 
+        message: "Profile scraped successfully", 
+        data: scrapedData,
+        source: "real_scraping"
+      };
+      
+      JSON.stringify(responseData); // Test serialization
+      res.json(responseData);
+    } catch (jsonError: any) {
+      console.error("JSON serialization error in test scrape response:", jsonError);
+      res.status(500).json({ 
+        error: "Response serialization failed", 
+        details: `Cannot convert response to JSON: ${jsonError.message}`
+      });
+    }
   } catch (error: any) {
     console.error("Error testing scrape:", error);
     res.status(500).json({ 
