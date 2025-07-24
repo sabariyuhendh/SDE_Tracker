@@ -51,77 +51,89 @@ export class TUFScraper {
   async scrapeProfile(username: string): Promise<TUFProfileData> {
     console.log(`🔍 Attempting to scrape real TUF profile for: ${username}`);
     
-    const browser = await this.initBrowser();
-    let page;
-    
     try {
-      page = await browser.newPage();
-      
-      // Set user agent and viewport for better compatibility
-      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
-      await page.setViewport({ width: 1920, height: 1080 });
-      
-      // Navigate to TUF profile page - Test with Volcaryx profile specifically
+      // Use fetch to get profile page HTML instead of Puppeteer
       const profileUrl = `https://takeuforward.org/profile/${username}`;
-      console.log(`🌐 Navigating to: ${profileUrl}`);
+      console.log(`🌐 Fetching profile: ${profileUrl}`);
       
-      await page.goto(profileUrl, { 
-        waitUntil: 'networkidle2',
-        timeout: 30000 
+      const response = await fetch(profileUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'DNT': '1',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1'
+        }
       });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`TUF profile "${username}" not found. Please check if the username is correct.`);
+        }
+        throw new Error(`Failed to fetch profile: ${response.status} ${response.statusText}`);
+      }
+
+      const html = await response.text();
+      console.log(`✅ Profile page fetched for ${username} (${html.length} chars)`);
       
-      // Wait for content to load
-      await page.waitForTimeout(5000);
+      // Parse HTML using cheerio instead of browser evaluation
       
-      // Check if profile exists and is accessible
-      const pageContent = await page.content();
-      const $ = cheerio.load(pageContent);
+      // Parse HTML using cheerio
+      const $ = cheerio.load(html);
       
       // Look for error messages or profile not found
-      if (pageContent.includes('Profile not found') || pageContent.includes('404') || pageContent.includes('User not found')) {
-        throw new Error(`Profile ${username} not found or not accessible`);
+      if (html.includes('Profile not found') || html.includes('404') || html.includes('User not found')) {
+        throw new Error(`TUF profile "${username}" not found or not accessible`);
       }
       
-      console.log(`✅ Profile page loaded for ${username}`);
+      // Extract real TUF data from the HTML
+      let totalSolved = 0;
+      let easy = 0, medium = 0, hard = 0;
       
-      // Extract real TUF data from the page
-      const profileData = await page.evaluate(() => {
-        // Look for A2Z Sheet statistics in various possible locations
-        let totalSolved = 0;
-        let easy = 0, medium = 0, hard = 0;
-        
-        // Strategy 1: Look for numeric counters and statistics
-        const allText = document.body.innerText || '';
-        console.log('Page content includes:', allText.substring(0, 500));
-        
-        // Strategy 2: Look for specific elements that might contain problem counts
-        const problemElements = document.querySelectorAll('[class*="problem"], [class*="solved"], [class*="count"], [class*="stat"]');
-        console.log('Found problem-related elements:', problemElements.length);
-        
-        // Strategy 3: Look for any numbers that could be problem counts
-        const numbers = allText.match(/\b\d{1,3}\b/g) || [];
-        console.log('Found numbers on page:', numbers.slice(0, 10));
-        
-        // Strategy 4: Extract from specific selectors
-        const possibleTotalElements = document.querySelectorAll('span, div, h1, h2, h3, .count, .number, .total');
-        for (let i = 0; i < possibleTotalElements.length; i++) {
-          const element = possibleTotalElements[i];
-          const text = element.textContent || '';
-          const number = parseInt(text);
-          if (number && number > 0 && number <= 455) { // A2Z has 455 problems max
-            totalSolved = Math.max(totalSolved, number);
-          }
+      // Strategy 1: Look for numeric counters and statistics in text content
+      const bodyText = $('body').text();
+      console.log('Page content sample:', bodyText.substring(0, 500));
+      
+      // Strategy 2: Look for specific elements that might contain problem counts
+      const problemElements = $('[class*="problem"], [class*="solved"], [class*="count"], [class*="stat"]');
+      console.log('Found problem-related elements:', problemElements.length);
+      
+      // Strategy 3: Look for any numbers that could be problem counts
+      const numbers = bodyText.match(/\b\d{1,3}\b/g) || [];
+      console.log('Found numbers on page:', numbers.slice(0, 10));
+      
+      // Strategy 4: Extract from specific selectors
+      $('span, div, h1, h2, h3, .count, .number, .total').each((i, element) => {
+        const text = $(element).text().trim();
+        const number = parseInt(text);
+        if (number && number > 0 && number <= 455) { // A2Z has 455 problems max
+          totalSolved = Math.max(totalSolved, number);
         }
-        
-        return { 
-          totalSolved,
-          easy: Math.floor(totalSolved * 0.4), // Estimate based on typical distribution
-          medium: Math.floor(totalSolved * 0.45),
-          hard: Math.floor(totalSolved * 0.15),
-          pageTitle: document.title,
-          hasContent: document.body.innerText.length > 100
-        };
       });
+
+      // Strategy 5: Look for specific A2Z progress indicators
+      const a2zProgress = bodyText.match(/(\d+)\/455|(\d+)\s*out\s*of\s*455|solved:\s*(\d+)/gi);
+      if (a2zProgress) {
+        console.log('Found A2Z progress indicators:', a2zProgress);
+        a2zProgress.forEach(match => {
+          const nums = match.match(/\d+/g);
+          if (nums && nums[0]) {
+            const solved = parseInt(nums[0]);
+            if (solved <= 455) totalSolved = Math.max(totalSolved, solved);
+          }
+        });
+      }
+      
+      const profileData = {
+        totalSolved,
+        easy: Math.floor(totalSolved * 0.4), // Estimate based on typical distribution
+        medium: Math.floor(totalSolved * 0.45),
+        hard: Math.floor(totalSolved * 0.15),
+        pageTitle: $('title').text(),
+        hasContent: bodyText.length > 100
+      };
       
       console.log(`📊 Extracted data for ${username}:`, profileData);
       
@@ -172,11 +184,6 @@ export class TUFScraper {
       // For other errors, generate realistic data as fallback
       console.log(`🔄 Generating realistic data as fallback for ${username}`);
       return this.generateRealisticTUFData(username);
-      
-    } finally {
-      if (page) {
-        await page.close();
-      }
     }
   }
 

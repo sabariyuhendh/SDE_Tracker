@@ -186,7 +186,7 @@ export class MemStorage implements IStorage {
       weekStart: insertReflection.weekStart,
       classStats: insertReflection.classStats ?? null,
       topicBreakdown: insertReflection.topicBreakdown ?? null,
-      highlights: insertReflection.highlights || [],
+      highlights: (insertReflection.highlights as string[]) || [],
       notes: insertReflection.notes ?? null,
       createdAt: new Date(),
     };
@@ -204,7 +204,7 @@ export class MemStorage implements IStorage {
       weekStart: updates.weekStart ?? existing.weekStart,
       classStats: updates.classStats !== undefined ? updates.classStats : existing.classStats,
       topicBreakdown: updates.topicBreakdown !== undefined ? updates.topicBreakdown : existing.topicBreakdown,
-      highlights: updates.highlights || existing.highlights || [],
+      highlights: (updates.highlights as string[]) || (existing.highlights as string[]) || [],
       notes: updates.notes !== undefined ? updates.notes : existing.notes,
     };
 
@@ -389,7 +389,13 @@ export class DatabaseStorage implements IStorage {
 
   async createWeeklyReflection(insertReflection: InsertWeeklyReflection): Promise<WeeklyReflection> {
     try {
-      const [reflection] = await db.insert(weeklyReflections).values(insertReflection).returning();
+      const [reflection] = await db.insert(weeklyReflections).values({
+        weekStart: insertReflection.weekStart,
+        classStats: insertReflection.classStats,
+        topicBreakdown: insertReflection.topicBreakdown,
+        highlights: insertReflection.highlights || [],
+        notes: insertReflection.notes
+      }).returning();
       return reflection;
     } catch (error) {
       console.error('Error creating weekly reflection:', error);
@@ -399,9 +405,16 @@ export class DatabaseStorage implements IStorage {
 
   async updateWeeklyReflection(weekStart: string, updates: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined> {
     try {
+      const updateData: any = {};
+      if (updates.weekStart !== undefined) updateData.weekStart = updates.weekStart;
+      if (updates.classStats !== undefined) updateData.classStats = updates.classStats;
+      if (updates.topicBreakdown !== undefined) updateData.topicBreakdown = updates.topicBreakdown;
+      if (updates.highlights !== undefined) updateData.highlights = updates.highlights;
+      if (updates.notes !== undefined) updateData.notes = updates.notes;
+      
       const [reflection] = await db
         .update(weeklyReflections)
-        .set(updates)
+        .set(updateData)
         .where(eq(weeklyReflections.weekStart, weekStart))
         .returning();
       return reflection || undefined;

@@ -78,6 +78,7 @@ export const updateStudentProgressSchema = z.object({
   }).optional(),
   reflection: z.string().optional(),
   weeklyIncrease: z.number().optional(),
+  weeklyProgress: z.record(z.number()).optional(),
 });
 
 export const insertWeeklyReflectionSchema = createInsertSchema(weeklyReflections).omit({
