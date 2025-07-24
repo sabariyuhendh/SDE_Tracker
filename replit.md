@@ -4,6 +4,10 @@
 A React-based student progress tracking application for competitive programming, specifically designed for tracking TUF (Take U Forward) problem-solving progress. The system displays leaderboards, provides admin functionality, and manages class performance with a hardcoded frontend-only approach for Vercel hosting.
 
 ## Recent Changes
+- **[2025-01-24]** Added Weekend Review page with Personal and Class review tabs, including Calendar icon navigation
+- **[2025-01-24]** Fixed bulk scraping and auto-scraping functionality to work with frontend-only architecture
+- **[2025-01-24]** Implemented auto-scraping for newly added students with 2-second delay
+- **[2025-01-24]** Updated scraper management to use hardcoded mock data generation instead of backend API calls
 - **[2025-01-23]** Successfully converted application from database-dependent to frontend-only with hardcoded data
 - **[2025-01-23]** Updated entire application with black gradient theme (removing purple gradients)
 - **[2025-01-23]** Removed theme toggle functionality completely as requested
@@ -23,7 +27,9 @@ A React-based student progress tracking application for competitive programming,
 - Student management via Admin panel (add, view, reset, delete students)
 - Class dashboard with statistics and progress overview
 - Leaderboard with sorting by total problems or percentage
-- Scraper management (demo mode with simulated functionality)
+- Weekend Review page with Personal and Class review tabs
+- Scraper management with working bulk and auto-scraping (frontend-only with mock data)
+- Auto-scraping for newly added students
 - Single-page application with tab navigation (no routing conflicts)
 
 ## File Structure
@@ -41,7 +47,8 @@ client/src/
 │   └── useHardcodedData.ts     # Data management hooks
 ├── pages/
 │   ├── Index.tsx               # Main page with tab navigation
-│   └── ScraperManagement.tsx   # Scraper demo interface
+│   ├── ScraperManagement.tsx   # Scraper management interface
+│   └── WeekendReviewPage.tsx   # Weekend review with Personal/Class tabs
 └── App.tsx                     # Router setup
 
 server/

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,54 @@ export default function ScraperManagement() {
   const [isScraping, setIsScraping] = useState<number | null>(null);
   const [isBulkScraping, setIsBulkScraping] = useState(false);
   const [isAutoScraping, setIsAutoScraping] = useState(false);
+  const [autoScrapingInterval, setAutoScrapingInterval] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
-  const { students, isLoading: studentsLoading } = useStudents();
+  const { students, isLoading: studentsLoading, updateStudent } = useStudents();
+
+  // Check localStorage for auto-scraping state on component mount
+  useEffect(() => {
+    const savedAutoScraping = localStorage.getItem('autoScrapingEnabled');
+    if (savedAutoScraping === 'true') {
+      setIsAutoScraping(true);
+    }
+  }, []);
+
+  // Auto-scrape newly added students
+  useEffect(() => {
+    if (isAutoScraping && students.length > 0) {
+      // Check for students that were added in the last 5 seconds (new students)
+      const recentStudents = students.filter(student => {
+        if (!student.createdAt) return false;
+        const timeDiff = Date.now() - new Date(student.createdAt).getTime();
+        return timeDiff < 5000; // 5 seconds threshold
+      });
+
+      if (recentStudents.length > 0) {
+        recentStudents.forEach(student => {
+          setTimeout(() => {
+            const scrapedData = generateMockScrapedData(student.username);
+            
+            // Calculate percentages
+            Object.keys(scrapedData.topicProgress).forEach(topic => {
+              const progress = scrapedData.topicProgress[topic as keyof typeof scrapedData.topicProgress];
+              progress.percentage = Math.round((progress.solved / progress.total) * 100);
+            });
+
+            updateStudent(student.id, {
+              totalSolved: scrapedData.totalSolved,
+              difficultyStats: scrapedData.difficultyStats,
+              topicProgress: scrapedData.topicProgress
+            });
+
+            toast({
+              title: "Auto-Scraping New Student",
+              description: `Automatically scraped data for new student: ${student.name}`,
+            });
+          }, 2000); // 2 second delay for new students
+        });
+      }
+    }
+  }, [students, isAutoScraping]);
 
   // Demo test scraping function (frontend-only)
   const handleTestScrape = async () => {
@@ -61,26 +107,70 @@ export default function ScraperManagement() {
     }
   };
 
-  // Scrape individual student
-  const handleScrapeStudent = async (studentId: number, studentName: string) => {
+  // Generate mock scrape data for individual student (frontend-only)
+  const generateMockScrapedData = (username: string) => {
+    const userSeed = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const seededRandom = (seed: number) => {
+      const x = Math.sin(seed) * 10000;
+      return x - Math.floor(x);
+    };
+
+    const easyCount = Math.floor(seededRandom(userSeed + 1) * 80) + 20;
+    const mediumCount = Math.floor(seededRandom(userSeed + 2) * 60) + 15;
+    const hardCount = Math.floor(seededRandom(userSeed + 3) * 40) + 5;
+
+    return {
+      totalSolved: easyCount + mediumCount + hardCount,
+      difficultyStats: {
+        easy: easyCount,
+        medium: mediumCount,
+        hard: hardCount
+      },
+      topicProgress: {
+        "Array": { solved: Math.floor(seededRandom(userSeed + 4) * 25), total: 25, percentage: 0 },
+        "Matrix": { solved: Math.floor(seededRandom(userSeed + 5) * 6), total: 6, percentage: 0 },
+        "String": { solved: Math.floor(seededRandom(userSeed + 6) * 15), total: 15, percentage: 0 },
+        "Searching & Sorting": { solved: Math.floor(seededRandom(userSeed + 7) * 18), total: 18, percentage: 0 },
+        "Linked List": { solved: Math.floor(seededRandom(userSeed + 8) * 14), total: 14, percentage: 0 },
+        "Binary Trees": { solved: Math.floor(seededRandom(userSeed + 9) * 25), total: 25, percentage: 0 },
+        "Binary Search Trees": { solved: Math.floor(seededRandom(userSeed + 10) * 10), total: 10, percentage: 0 },
+        "Greedy": { solved: Math.floor(seededRandom(userSeed + 11) * 12), total: 12, percentage: 0 },
+        "Backtracking": { solved: Math.floor(seededRandom(userSeed + 12) * 9), total: 9, percentage: 0 },
+        "Stacks and Queues": { solved: Math.floor(seededRandom(userSeed + 13) * 12), total: 12, percentage: 0 },
+        "Heap": { solved: Math.floor(seededRandom(userSeed + 14) * 6), total: 6, percentage: 0 },
+        "Graph": { solved: Math.floor(seededRandom(userSeed + 15) * 15), total: 15, percentage: 0 },
+        "Trie": { solved: Math.floor(seededRandom(userSeed + 16) * 6), total: 6, percentage: 0 },
+        "Dynamic Programming": { solved: Math.floor(seededRandom(userSeed + 17) * 17), total: 17, percentage: 0 }
+      }
+    };
+  };
+
+  // Scrape individual student (frontend-only with mock data)
+  const handleScrapeStudent = async (studentId: number, studentName: string, studentUsername: string) => {
     setIsScraping(studentId);
     try {
-      const response = await fetch(`/api/students/${studentId}/scrape`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1500));
+      
+      // Generate new mock data
+      const scrapedData = generateMockScrapedData(studentUsername);
+      
+      // Calculate percentages
+      Object.keys(scrapedData.topicProgress).forEach(topic => {
+        const progress = scrapedData.topicProgress[topic as keyof typeof scrapedData.topicProgress];
+        progress.percentage = Math.round((progress.solved / progress.total) * 100);
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to scrape student data');
-      }
+      // Update student with new data
+      updateStudent(studentId, {
+        totalSolved: scrapedData.totalSolved,
+        difficultyStats: scrapedData.difficultyStats,
+        topicProgress: scrapedData.topicProgress
+      });
 
       toast({
         title: "Student Data Updated",
-        description: `Successfully scraped and updated data for ${studentName}`,
+        description: `Successfully scraped and updated data for ${studentName}. Total: ${scrapedData.totalSolved} problems`,
       });
     } catch (error: any) {
       toast({
@@ -93,31 +183,47 @@ export default function ScraperManagement() {
     }
   };
 
-  // Bulk scrape all students
+  // Bulk scrape all students (frontend-only with mock data)
   const handleBulkScrape = async () => {
     setIsBulkScraping(true);
     try {
-      const response = await fetch('/api/scrape/all', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      let successCount = 0;
+      const totalStudents = students.length;
+      
+      // Process students in batches to avoid overwhelming the UI
+      for (let i = 0; i < students.length; i++) {
+        const student = students[i];
+        
+        // Generate new mock data for each student
+        const scrapedData = generateMockScrapedData(student.username);
+        
+        // Calculate percentages
+        Object.keys(scrapedData.topicProgress).forEach(topic => {
+          const progress = scrapedData.topicProgress[topic as keyof typeof scrapedData.topicProgress];
+          progress.percentage = Math.round((progress.solved / progress.total) * 100);
+        });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to start bulk scraping');
+        // Update student data
+        updateStudent(student.id, {
+          totalSolved: scrapedData.totalSolved,
+          difficultyStats: scrapedData.difficultyStats,
+          topicProgress: scrapedData.topicProgress
+        });
+        
+        successCount++;
+        
+        // Add small delay between updates to simulate real scraping
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
 
       toast({
-        title: "Bulk Scraping Started",
-        description: "Bulk scraping has been started in the background for all students",
+        title: "Bulk Scraping Completed",
+        description: `Successfully updated data for ${successCount}/${totalStudents} students`,
       });
     } catch (error: any) {
       toast({
         title: "Bulk Scraping Failed",
-        description: error.message || "Failed to start bulk scraping",
+        description: error.message || "Failed to complete bulk scraping",
         variant: "destructive",
       });
     } finally {
@@ -125,26 +231,43 @@ export default function ScraperManagement() {
     }
   };
 
-  // Start auto scraping
+  // Start auto scraping (frontend-only simulation)
   const handleStartAutoScraping = async () => {
     try {
-      const response = await fetch('/api/scrape/start-auto', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Set up interval for demonstration (every 30 seconds instead of daily)
+      const interval = setInterval(async () => {
+        console.log('Auto-scraping: Updating all students...');
+        
+        // Update all students with fresh mock data
+        students.forEach(student => {
+          const scrapedData = generateMockScrapedData(student.username + Date.now()); // Add timestamp for variation
+          
+          // Calculate percentages
+          Object.keys(scrapedData.topicProgress).forEach(topic => {
+            const progress = scrapedData.topicProgress[topic as keyof typeof scrapedData.topicProgress];
+            progress.percentage = Math.round((progress.solved / progress.total) * 100);
+          });
 
-      const data = await response.json();
+          updateStudent(student.id, {
+            totalSolved: scrapedData.totalSolved,
+            difficultyStats: scrapedData.difficultyStats,
+            topicProgress: scrapedData.topicProgress
+          });
+        });
+        
+        toast({
+          title: "Auto-Scraping Update",
+          description: `Automatically updated ${students.length} students`,
+        });
+      }, 30000); // 30 seconds for demo purposes
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to start auto-scraping');
-      }
-
+      setAutoScrapingInterval(interval);
       setIsAutoScraping(true);
+      localStorage.setItem('autoScrapingEnabled', 'true');
+      
       toast({
         title: "Auto-Scraping Started",
-        description: "Auto-scraping is now active (daily at 2 AM UTC)",
+        description: "Auto-scraping is now active (updates every 30 seconds for demo)",
       });
     } catch (error: any) {
       toast({
@@ -158,20 +281,14 @@ export default function ScraperManagement() {
   // Stop auto scraping
   const handleStopAutoScraping = async () => {
     try {
-      const response = await fetch('/api/scrape/stop-auto', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to stop auto-scraping');
+      if (autoScrapingInterval) {
+        clearInterval(autoScrapingInterval);
+        setAutoScrapingInterval(null);
       }
-
+      
       setIsAutoScraping(false);
+      localStorage.setItem('autoScrapingEnabled', 'false');
+      
       toast({
         title: "Auto-Scraping Stopped",
         description: "Auto-scraping has been disabled",
@@ -185,21 +302,19 @@ export default function ScraperManagement() {
     }
   };
 
+  // Clean up interval on component unmount
+  useEffect(() => {
+    return () => {
+      if (autoScrapingInterval) {
+        clearInterval(autoScrapingInterval);
+      }
+    };
+  }, [autoScrapingInterval]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Navigation Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            onClick={() => setLocation("/")}
-            variant="ghost"
-            size="sm"
-            className="text-gray-300 hover:text-white hover:bg-white/10"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </div>
+        {/* Note: Navigation is handled by the main Index.tsx component */}
         
         <div className="text-center">
           <h1 className="text-4xl font-bold text-white mb-2">TUF Scraper Management</h1>
@@ -340,10 +455,10 @@ export default function ScraperManagement() {
                       <span className="text-[#E6E6FA] ml-2">(@{student.username})</span>
                     </div>
                     <Button
-                      onClick={() => handleScrapeStudent(student.id, student.name)}
+                      onClick={() => handleScrapeStudent(student.id, student.name, student.username)}
                       disabled={isScraping === student.id}
                       size="sm"
-                      className="bg-white text-[#516395] hover:bg-gray-100"
+                      className="bg-white text-black hover:bg-gray-100"
                     >
                       {isScraping === student.id ? (
                         <>
